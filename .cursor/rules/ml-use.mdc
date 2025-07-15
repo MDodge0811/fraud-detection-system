@@ -1,0 +1,36 @@
+---
+alwaysApply: true
+---
+
+- Library: ml.js (logistic regression for binary classification: fraud/non-fraud).
+- Features (extract via SQL queries):
+  - Normalized amount (amount / 10000).
+  - Device age (hours: (NOW() - Devices.last_seen) / 3600).
+  - Merchant risk_level (0-100).
+  - Transaction frequency (COUNT(Transactions) in last 5 min per user).
+  - Average user amount (AVG(amount) in last 24 hours).
+- Training:
+  - Query Training_Data for features (JSONB) and labels.
+  - Use 80/20 split: Train on 800 samples, validate on 200.
+  - Code example:
+```
+import * as ML from 'ml';
+const { LogisticRegression } = ML.Classification;
+
+// Load data from DB (features: number[][], labels: number[])
+const features: number[][] = []; // e.g., [[0.6, 2, 0.8, 3, 0.5], ...]
+const labels: number[] = []; // [0, 1, 0, ...]
+
+const model = new LogisticRegression();
+model.train(features, labels);
+
+// Predict (for new tx features)
+const prediction: number = model.predict([newFeatures]); // Probability (scale to 0-100)
+```
+
+- Real-Time Scoring:
+  - On new transaction, extract features with queries like:
+  - sql `SELECT AVG(amount) FROM Transactions WHERE user_id = $1 AND timestamp > NOW() - INTERVAL '24 hours';`
+  - Normalize, predict, insert to Risk_Signals if >75, trigger Alert.
+  
+Evaluation: Compute accuracy on validation set; aim for >80%. Retrain periodically (comment for production).

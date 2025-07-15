@@ -1,0 +1,29 @@
+---
+alwaysApply: true
+---
+
+project/
+├── backend/
+│   ├── index.ts // Express app
+│   ├── routes/transactions.ts // Endpoints
+│   ├── models/db.ts // PG connection
+│   ├── utils/mlUtils.ts // ML functions
+│   ├── seed.ts // Data seeding
+│   └── .env // DB_URL=postgres://...
+├── frontend/
+│   ├── src/
+│   │   ├── components/Dashboard.tsx // Alerts table (TanStack), chart
+│   │   ├── App.tsx // Main app
+│   │   └── tailwind.config.js
+└── README.md // Setup, demo instructions
+
+# Backend Key Files
+- index.ts: Set up Express, connect DB, routes for /transactions, /alerts, /reports.
+- Transaction simulation: setInterval to generate mock tx every 5s.
+  
+# Frontend Key Files
+- Dashboard.tsx: Fetch alerts every 10s, display with TanStack Table (sortable, filters).
+  - Use useReactTable hook for headless table logic.
+  - Example: Define columns with createColumnHelper<Alert>(), enable sorting/filtering.
+- Chart: Use Chart.js line for historical (query alerts COUNT by hour).
+- Styles: Tailwind with fintech theme (dark, red for high-risk).

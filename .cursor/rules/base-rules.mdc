@@ -1,0 +1,51 @@
+---
+alwaysApply: true
+---
+
+Cursor Context File: Real-Time Fraud Detection Alert System with ML-Based Risk Scoring
+This context file provides a comprehensive overview and guidance for building the Real-Time Fraud Detection Alert System with ML-Based Risk Scoring in Cursor. Use this as a reference when coding, asking Cursor for help on specific components, or generating code snippets. It focuses on fraud detection using a complex PostgreSQL schema, Node.js backend, React frontend, and ML for risk scoring. This version incorporates TypeScript for type safety across backend and frontend, and uses the latest TanStack Table (@tanstack/react-table v8) for the interactive alerts table.
+
+Focus on fintech priorities: reliability, security, compliance, and scalability. Emphasize clean code, error handling, types, and comments.
+
+# Project Overview
+# Why This Project?
+## Goal: 
+Build a real-time system that simulates financial transactions, uses ML to score fraud risk, generates alerts, and provides an interactive dashboard.
+
+## Key Features:
+- Mock transaction generation (e.g., payments with varying amounts, users, devices).
+- ML-based risk scoring using logistic regression on features like amount, device age, merchant risk.
+- Real-time alerts for high-risk transactions.
+- Interactive dashboard with filters, historical charts, and alert resolution (using TanStack Table for sortable/filterable tables).
+- Compliance reporting (PDF exports of audit logs).
+- Business Impact: Reduces fraud losses, ensures compliance (e.g., audit trails), and demonstrates innovation in fintech.
+- Timeframe: 15-20 hours (10-hour base + 5-10 hours for ML and enhancements).
+- Deliverables: Deployed app on Vercel, demo script, README.
+
+## Assumptions
+- You have basic experience with Node.js, React, PostgreSQL, TypeScript, and ML concepts.
+- Use free tiers: Neon/Supabase for PostgreSQL, Vercel for deployment.
+- No internet access needed for ML (use mock data; ml.js is lightweight).
+- 
+## Security: 
+- In a real fintech app, add encryption (e.g., for user data) and authentication—mention this in comments but skip for time.
+  
+## Tech Stack
+Backend: Node.js v20+ with Express.js (for API routes), TypeScript for type safety.
+Dependencies: express, pg (PostgreSQL client), ml (for logistic regression), pdfkit (for reports), uuid (for IDs), dotenv (for env vars).
+Dev Dependencies: typescript, @types/node, @types/express, @types/pg, @types/uuid, ts-node.
+Database: PostgreSQL (complex schema with 8 tables, relationships, indexes).
+Frontend: React (with Vite for setup and TypeScript), @tanstack/react-table (for interactive tables), react-chartjs-2 (charts), Tailwind CSS (styling).
+ML: ml.js for logistic regression (simple, no heavy dependencies).
+Deployment: Vercel (separate repos for backend/frontend or monorepo).
+Other Tools: GitHub for version control, Redis (optional for caching recent alerts).
+
+Installation Command (run in project root):
+### Backend
+cd backend
+npm install express pg ml pdfkit uuid dotenv
+npm install --save-dev typescript @types/node @types/express @types/pg @types/uuid ts-node
+
+### Frontend
+cd frontend
+npm install react-chartjs-2 chart.js @tanstack/react-table tailwindcss postcss autoprefixer

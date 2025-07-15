@@ -1,0 +1,84 @@
+---
+alwaysApply: true
+---
+
+Database Schema
+Use PostgreSQL. Set up with Neon free tier (create a database, get connection string in .env). Run the SQL below to create tables. Seed with mock data (e.g., 10 users, 5 devices, 20 merchants, 1,000 transactions).
+
+-- Users: Basic user profiles
+CREATE TABLE Users (
+    user_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Devices: User devices for fraud signals
+CREATE TABLE Devices (
+    device_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES Users(user_id),
+    fingerprint VARCHAR(255) NOT NULL,
+    last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Merchants: Merchant risk profiles
+CREATE TABLE Merchants (
+    merchant_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(100) NOT NULL,
+    category VARCHAR(50),
+    risk_level INT DEFAULT 50 CHECK (risk_level >= 0 AND risk_level <= 100)
+);
+
+-- Transactions: Core transaction logs
+CREATE TABLE Transactions (
+    transaction_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES Users(user_id),
+    device_id UUID REFERENCES Devices(device_id),
+    merchant_id UUID REFERENCES Merchants(merchant_id),
+    amount DECIMAL(15,2) NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(20) DEFAULT 'pending'
+);
+
+-- Risk_Signals: ML and rule-based signals
+CREATE TABLE Risk_Signals (
+    signal_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    transaction_id UUID REFERENCES Transactions(transaction_id),
+    signal_type VARCHAR(50) NOT NULL, -- e.g., 'ml_risk'
+    risk_score INT NOT NULL CHECK (risk_score >= 0 AND risk_score <= 100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Alerts: Fraud alerts
+CREATE TABLE Alerts (
+    alert_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    transaction_id UUID REFERENCES Transactions(transaction_id),
+    risk_score INT NOT NULL,
+    reason TEXT NOT NULL,
+    status VARCHAR(20) DEFAULT 'open',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Audit_Logs: Compliance audit trail
+CREATE TABLE Audit_Logs (
+    log_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    alert_id UUID REFERENCES Alerts(alert_id),
+    user_id UUID REFERENCES Users(user_id), -- Analyst ID
+    action VARCHAR(50) NOT NULL, -- e.g., 'resolved'
+    details TEXT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Training_Data: For ML model training
+CREATE TABLE Training_Data (
+    data_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    transaction_id UUID REFERENCES Transactions(transaction_id),
+    features_json JSONB NOT NULL, -- e.g., {"amount": 6000, "device_age": 2, ...}
+    label INT NOT NULL CHECK (label IN (0, 1)), -- 0: non-fraud, 1: fraud
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for performance
+CREATE INDEX idx_transactions_timestamp ON Transactions(timestamp);
+CREATE INDEX idx_alerts_created_at ON Alerts(created_at);
+CREATE INDEX idx_training_data_created_at ON Training_Data(created_at);
