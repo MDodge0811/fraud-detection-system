@@ -31,7 +31,7 @@ Build a real-time system that simulates financial transactions, uses ML to score
 - In a real fintech app, add encryption (e.g., for user data) and authentication—mention this in comments but skip for time.
   
 ## Tech Stack
-Backend: Node.js v20+ with Express.js (for API routes), TypeScript for type safety.
+Backend: Node.js v20+ with Express.js (for API routes), TypeScript for type safety, Prisma for database ORM
 Dependencies: express, pg (PostgreSQL client), ml (for logistic regression), pdfkit (for reports), uuid (for IDs), dotenv (for env vars).
 Dev Dependencies: typescript, @types/node, @types/express, @types/pg, @types/uuid, ts-node.
 Database: PostgreSQL (complex schema with 8 tables, relationships, indexes).
