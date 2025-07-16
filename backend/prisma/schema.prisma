@@ -3,6 +3,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+generator client {
+  provider = "prisma-client-js"
+}
+
 model alerts {
   alert_id       String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   transaction_id String?       @db.Uuid
