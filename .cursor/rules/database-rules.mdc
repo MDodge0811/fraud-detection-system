@@ -4,6 +4,8 @@ The database is Postgres, using the Prisma ORM.
 
 Read ./backend/prisma/schema.prisma for an up-to-date schema for the application.
 
+Prisma Documentation: https://www.prisma.io/docs/orm
+
 ## Key Database Patterns:
 - All tables use UUID primary keys for security
 - Proper foreign key relationships with cascade options
