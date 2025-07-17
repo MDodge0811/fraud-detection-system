@@ -107,16 +107,46 @@ GET /simulation/status
 ```
 Returns the current status of transaction simulation.
 
+### Risk Analysis
+```
+GET /risk-analysis/:transactionId
+```
+Returns detailed risk analysis for a specific transaction including features and risk factors.
+
 ## Transaction Simulation
 
 The system automatically generates mock transactions every 5 seconds:
 
 - **Random amounts**: $1 - $10,000
-- **Random risk scores**: 0-100%
+- **Real ML-based risk scoring**: Uses feature extraction and weighted algorithms
 - **Automatic alerts**: Generated for risk scores ≥75%
 - **Realistic data**: Uses seeded users, devices, and merchants
 - **Modular design**: Transaction simulation is handled by `services/transactionSimulator.ts`
 - **Graceful shutdown**: Simulation stops cleanly on server shutdown
+
+## Risk Analysis System
+
+The system uses real ML-based risk scoring with the following features:
+
+### **Risk Factors:**
+- **Transaction Amount** (25% weight): Normalized amount relative to $10,000 max
+- **Device Age** (15% weight): How long the device has been used
+- **Merchant Risk** (30% weight): Pre-configured merchant risk levels
+- **Transaction Frequency** (20% weight): Number of transactions in last 5 minutes
+- **Average User Amount** (10% weight): User's average transaction amount
+
+### **Risk Multipliers:**
+- High amount relative to user's average (1.5x)
+- High frequency transactions (1.3x)
+- Very new device (1.4x)
+- High-risk merchant (1.6x)
+
+### **Risk Levels:**
+- **Critical**: 90-100%
+- **High**: 75-89%
+- **Medium**: 50-74%
+- **Low**: 25-49%
+- **Very Low**: 0-24%
 
 ## Database Schema
 

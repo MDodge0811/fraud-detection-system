@@ -1,4 +1,5 @@
 import { prisma } from '../prisma/client';
+import { analyzeTransactionRisk, getRiskLevel } from './riskAnalyzer';
 
 // Mock data generation functions
 function generateRandomAmount(): number {
@@ -6,10 +7,7 @@ function generateRandomAmount(): number {
   return Math.floor(Math.random() * 10000) + 1;
 }
 
-function generateRandomRiskScore(): number {
-  // Generate risk scores between 0 and 100
-  return Math.floor(Math.random() * 101);
-}
+
 
 async function getRandomUser() {
   const users = await prisma.users.findMany();
@@ -54,29 +52,41 @@ export async function simulateTransaction() {
       }
     });
 
-    // Generate risk signal
-    const riskScore = generateRandomRiskScore();
+    // Analyze transaction risk using real ML-based scoring
+    const riskAnalysis = await analyzeTransactionRisk(
+      transaction.transaction_id,
+      user.user_id,
+      device.device_id,
+      merchant.merchant_id,
+      amount
+    );
+
+    // Create risk signal with real analysis
     await prisma.risk_signals.create({
       data: {
         transaction_id: transaction.transaction_id,
         signal_type: 'ml_risk',
-        risk_score: riskScore
+        risk_score: riskAnalysis.riskScore
       }
     });
 
     // Create alert if risk score is high
-    if (riskScore >= 75) {
+    if (riskAnalysis.riskScore >= 75) {
+      const riskLevel = getRiskLevel(riskAnalysis.riskScore);
+      const reasons = riskAnalysis.reasons.join(', ');
+      
       await prisma.alerts.create({
         data: {
           transaction_id: transaction.transaction_id,
-          risk_score: riskScore,
-          reason: `High risk transaction detected: Amount $${amount}, Risk Score ${riskScore}%`,
+          risk_score: riskAnalysis.riskScore,
+          reason: `${riskLevel} risk transaction: $${amount} (${riskAnalysis.riskScore}%) - ${reasons}`,
           status: 'open'
         }
       });
-      console.log(`🚨 High-risk transaction created: $${amount} (Risk: ${riskScore}%)`);
+      console.log(`🚨 ${riskLevel} risk transaction: $${amount} (${riskAnalysis.riskScore}%) - ${reasons}`);
     } else {
-      console.log(`💳 Transaction created: $${amount} (Risk: ${riskScore}%)`);
+      const riskLevel = getRiskLevel(riskAnalysis.riskScore);
+      console.log(`💳 Transaction created: $${amount} (${riskLevel} risk: ${riskAnalysis.riskScore}%)`);
     }
 
   } catch (error) {

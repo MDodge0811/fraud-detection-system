@@ -2,7 +2,7 @@ import express from 'express';
 import { prisma } from './prisma/client';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import { startTransactionSimulation, stopTransactionSimulation, getSimulationStatus } from './services';
+import { startTransactionSimulation, stopTransactionSimulation, getSimulationStatus, analyzeTransactionRisk } from './services';
 
 // Extend global type for simulation interval
 declare global {
@@ -170,6 +170,54 @@ app.get('/simulation/status', (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to get simulation status',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Risk analysis endpoint
+app.get('/risk-analysis/:transactionId', async (req, res) => {
+  try {
+    const { transactionId } = req.params;
+    
+    // Get transaction details
+    const transaction = await prisma.transactions.findUnique({
+      where: { transaction_id: transactionId },
+      include: {
+        users: true,
+        merchants: true,
+        devices: true
+      }
+    });
+
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        error: 'Transaction not found'
+      });
+    }
+
+    // Perform risk analysis
+    const riskAnalysis = await analyzeTransactionRisk(
+      transaction.transaction_id,
+      transaction.user_id!,
+      transaction.device_id!,
+      transaction.merchant_id!,
+      Number(transaction.amount)
+    );
+
+    res.json({
+      success: true,
+      data: {
+        transaction,
+        riskAnalysis
+      }
+    });
+  } catch (error) {
+    console.error('Error analyzing transaction risk:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to analyze transaction risk',
       message: error instanceof Error ? error.message : 'Unknown error'
     });
   }
