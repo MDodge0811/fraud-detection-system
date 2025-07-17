@@ -1,13 +1,31 @@
 import React from 'react';
+import styled from 'styled-components';
 import { Bar } from 'react-chartjs-2';
 import { useDashboardStore } from '@/stores';
+
+// Styled components
+const ChartContainer = styled.div`
+  background-color: ${({ theme }) => theme.colors.background.card};
+  border: 1px solid ${({ theme }) => theme.colors.border.primary};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  padding: ${({ theme }) => theme.spacing.xl};
+  box-shadow: ${({ theme }) => theme.shadows.md};
+  margin-bottom: ${({ theme }) => theme.spacing.xxl};
+`;
+
+const ChartTitle = styled.h3`
+  font-size: ${({ theme }) => theme.typography.fontSizes.lg};
+  font-weight: ${({ theme }) => theme.typography.fontWeights.semibold};
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+`;
 
 const AlertTrendsChart: React.FC = () => {
   const getAlertTrendsData = useDashboardStore(state => state.getAlertTrendsData);
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 mb-8">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Alert Trends (All Time)</h3>
+    <ChartContainer>
+      <ChartTitle>Alert Trends (All Time)</ChartTitle>
       <Bar
         data={getAlertTrendsData()}
         options={{
@@ -15,16 +33,36 @@ const AlertTrendsChart: React.FC = () => {
           plugins: {
             legend: {
               position: 'top' as const,
+              labels: {
+                color: '#f8fafc',
+                font: {
+                  size: 12,
+                },
+              },
             },
           },
           scales: {
+            x: {
+              ticks: {
+                color: '#cbd5e1',
+              },
+              grid: {
+                color: '#334155',
+              },
+            },
             y: {
               beginAtZero: true,
+              ticks: {
+                color: '#cbd5e1',
+              },
+              grid: {
+                color: '#334155',
+              },
             },
           },
         }}
       />
-    </div>
+    </ChartContainer>
   );
 };
 

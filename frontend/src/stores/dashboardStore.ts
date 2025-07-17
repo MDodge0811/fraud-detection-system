@@ -14,6 +14,10 @@ interface DashboardState {
   recentAlerts: Alert[];
   loading: boolean;
   
+  // Pagination state
+  alertsPage: number;
+  alertsPerPage: number;
+  
   // Actions
   setConnectionStatus: (status: 'connecting' | 'connected' | 'disconnected') => void;
   setStats: (stats: DashboardStats) => void;
@@ -21,15 +25,24 @@ interface DashboardState {
   addAlert: (alert: Alert) => void;
   setLoading: (loading: boolean) => void;
   
+  // Pagination actions
+  setAlertsPage: (page: number) => void;
+  nextAlertsPage: () => void;
+  prevAlertsPage: () => void;
+  
   // Chart data actions
   initializeChartData: (transactions: Transaction[], alerts: Alert[]) => void;
   updateTransactionData: (transaction: Transaction) => void;
   updateAlertData: (alert: Alert) => void;
   
-        // Chart data getters
-      getTransactionVolumeData: () => ChartData;
-      getRiskDistributionData: () => ChartData;
-      getAlertTrendsData: () => ChartData;
+  // Chart data getters
+  getTransactionVolumeData: () => ChartData;
+  getRiskDistributionData: () => ChartData;
+  getAlertTrendsData: () => ChartData;
+  
+  // Pagination getters
+  getPaginatedAlerts: () => Alert[];
+  getAlertsPageInfo: () => { currentPage: number; totalPages: number; totalAlerts: number };
   
   // Data fetching
   fetchDashboardData: () => Promise<void>;
@@ -37,12 +50,16 @@ interface DashboardState {
 
 export const useDashboardStore = create<DashboardState>()(
   devtools(
-    (set) => ({
+    (set, get) => ({
       // Initial state
       connectionStatus: 'connecting',
       stats: null,
       recentAlerts: [],
       loading: true,
+      
+      // Pagination state
+      alertsPage: 1,
+      alertsPerPage: 10,
 
       // Connection actions
       setConnectionStatus: (status) => {
@@ -66,6 +83,26 @@ export const useDashboardStore = create<DashboardState>()(
 
       setLoading: (loading) => {
         set({ loading });
+      },
+
+      // Pagination actions
+      setAlertsPage: (page) => {
+        set({ alertsPage: page });
+      },
+
+      nextAlertsPage: () => {
+        const state = get();
+        const totalPages = Math.ceil(state.recentAlerts.length / state.alertsPerPage);
+        if (state.alertsPage < totalPages) {
+          set({ alertsPage: state.alertsPage + 1 });
+        }
+      },
+
+      prevAlertsPage: () => {
+        const state = get();
+        if (state.alertsPage > 1) {
+          set({ alertsPage: state.alertsPage - 1 });
+        }
       },
 
       // Chart data actions
@@ -92,6 +129,25 @@ export const useDashboardStore = create<DashboardState>()(
 
       getAlertTrendsData: () => {
         return dashboardDataService.generateAlertTrendsData();
+      },
+
+      // Pagination getters
+      getPaginatedAlerts: () => {
+        const state = get();
+        const startIndex = (state.alertsPage - 1) * state.alertsPerPage;
+        const endIndex = startIndex + state.alertsPerPage;
+        return state.recentAlerts.slice(startIndex, endIndex);
+      },
+
+      getAlertsPageInfo: () => {
+        const state = get();
+        const totalAlerts = state.recentAlerts.length;
+        const totalPages = Math.ceil(totalAlerts / state.alertsPerPage);
+        return {
+          currentPage: state.alertsPage,
+          totalPages,
+          totalAlerts
+        };
       },
 
       // Data fetching

@@ -1,11 +1,14 @@
+import { ThemeProvider } from 'styled-components';
 import Dashboard from '@/components/Dashboard';
-import './App.css';
+import { GlobalStyles } from '@/styles/GlobalStyles';
+import { theme } from '@/styles/theme';
 
 function App() {
   return (
-    <div className="App">
+    <ThemeProvider theme={theme}>
+      <GlobalStyles />
       <Dashboard />
-    </div>
+    </ThemeProvider>
   );
 }
 

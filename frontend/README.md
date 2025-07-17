@@ -5,7 +5,7 @@ A React-based dashboard for visualizing real-time fraud detection data, transact
 ## Features
 
 ### 📊 **Real-time Charts**
-- **Transaction Volume Chart**: Shows transaction count over the last 24 hours
+- **Transaction Volume Chart**: Shows transaction count over time with real-time updates
 - **Risk Distribution Chart**: Doughnut chart displaying risk level distribution
 - **Alert Trends Chart**: Bar chart showing alert frequency over time
 
@@ -13,24 +13,28 @@ A React-based dashboard for visualizing real-time fraud detection data, transact
 - Total Transactions
 - Active Alerts
 - High Risk Transactions
-- Average Transaction Amount
+- Alert Resolution Rate
 
 ### 🚨 **Alert Management**
 - Real-time alert table with risk scores
 - Alert status tracking (open/resolved)
 - Risk level color coding
+- Pagination for better performance
 
-### 🔄 **Auto-refresh**
-- Dashboard data refreshes every 10 seconds
-- Real-time updates from the backend API
+### 🔄 **Real-time Updates**
+- WebSocket connection for live data updates
+- Connection status indicator
+- Automatic reconnection handling
 
 ## Tech Stack
 
 - **React 19** with TypeScript
 - **Chart.js** with **react-chartjs-2** for data visualization
-- **Tailwind CSS** for styling
+- **styled-components** for styling and theming
 - **date-fns** for date formatting
 - **TanStack Table** for data tables
+- **Zustand** for state management
+- **Socket.IO Client** for real-time communication
 
 ## Getting Started
 
@@ -66,9 +70,25 @@ The dashboard connects to the backend API endpoints:
 ```
 src/
 ├── components/
-│   └── Dashboard.tsx          # Main dashboard component
+│   ├── Dashboard.tsx          # Main dashboard component
+│   ├── StatsCards.tsx         # Statistics cards
+│   ├── ConnectionStatus.tsx   # WebSocket connection status
+│   ├── AlertsTable.tsx        # Alerts table with pagination
+│   └── charts/
+│       ├── TransactionVolumeChart.tsx
+│       ├── RiskDistributionChart.tsx
+│       └── AlertTrendsChart.tsx
 ├── services/
-│   └── api.ts                # API service layer
+│   ├── api.ts                # API service layer
+│   └── websocket.ts          # WebSocket service
+├── stores/
+│   ├── dashboardStore.ts     # Dashboard state management
+│   └── websocketStore.ts     # WebSocket state management
+├── styles/
+│   ├── GlobalStyles.ts       # Global styled-components styles
+│   ├── theme.ts              # Theme configuration
+│   ├── components.ts         # Reusable styled components
+│   └── styled.d.ts           # TypeScript declarations
 ├── App.tsx                   # Main app component
 └── main.tsx                  # App entry point
 ```
@@ -91,7 +111,26 @@ src/
 
 ### Styling
 
-The dashboard uses Tailwind CSS for styling. All components are responsive and follow a consistent design system.
+The dashboard uses **styled-components** for styling with a comprehensive theme system:
+
+- **Theme-based styling** with consistent colors, spacing, and typography
+- **Responsive design** with breakpoint utilities
+- **Dark theme** optimized for data visualization
+- **Reusable components** for consistent UI patterns
+
+### State Management
+
+The application uses **Zustand** for state management:
+
+- **Dashboard Store**: Manages dashboard data, charts, and pagination
+- **WebSocket Store**: Handles real-time connection and event management
+
+### Real-time Features
+
+- **WebSocket Connection**: Real-time data updates from the backend
+- **Connection Status**: Visual indicator of connection state
+- **Auto-reconnection**: Automatic reconnection on connection loss
+- **Event Handling**: Real-time updates for charts and alerts
 
 ## Backend Integration
 
@@ -101,5 +140,17 @@ Make sure your backend server is running and has the following endpoints impleme
 - Transaction data endpoint
 - Alert management endpoints
 - Risk analysis endpoints
+- WebSocket server for real-time updates
 
-The frontend will automatically connect to `http://localhost:3000` for API calls.
+The frontend will automatically connect to `http://localhost:3000` for API calls and WebSocket communication.
+
+## Theme Customization
+
+The application uses a comprehensive theme system that can be customized in `src/styles/theme.ts`:
+
+- **Colors**: Background, text, status, and risk level colors
+- **Typography**: Font sizes, weights, and line heights
+- **Spacing**: Consistent spacing scale
+- **Breakpoints**: Responsive design breakpoints
+- **Shadows**: Box shadow utilities
+- **Transitions**: Animation timing functions

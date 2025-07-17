@@ -5,12 +5,13 @@ import {
   PointElement,
   LineElement,
   BarElement,
-  Title,
+  Title as ChartTitle,
   Tooltip,
   Legend,
   ArcElement,
 } from 'chart.js';
 import { Chart as ChartJS } from 'chart.js';
+import styled from 'styled-components';
 
 // Import stores
 import { useDashboardStore, useWebSocketStore } from '@/stores';
@@ -21,6 +22,80 @@ import ConnectionStatus from '@/components/ConnectionStatus';
 import AlertsTable from '@/components/AlertsTable';
 import { TransactionVolumeChart, RiskDistributionChart, AlertTrendsChart } from '@/components/charts';
 
+// Styled components
+const DashboardContainer = styled.div`
+  min-height: 100vh;
+  background-color: ${({ theme }) => theme.colors.background.primary};
+  padding: ${({ theme }) => theme.spacing.xl};
+`;
+
+const DashboardContent = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+`;
+
+const Header = styled.div`
+  margin-bottom: ${({ theme }) => theme.spacing.xxl};
+`;
+
+const HeaderContent = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: ${({ theme }) => theme.spacing.md};
+  }
+`;
+
+const HeaderText = styled.div``;
+
+const Title = styled.h1`
+  font-size: ${({ theme }) => theme.typography.fontSizes['3xl']};
+  font-weight: ${({ theme }) => theme.typography.fontWeights.bold};
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
+`;
+
+const Subtitle = styled.p`
+  font-size: ${({ theme }) => theme.typography.fontSizes.base};
+  color: ${({ theme }) => theme.colors.text.secondary};
+`;
+
+const ChartsGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: ${({ theme }) => theme.spacing.xl};
+  margin-bottom: ${({ theme }) => theme.spacing.xxl};
+  
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    grid-template-columns: 1fr 1fr;
+  }
+`;
+
+const LoadingContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+`;
+
+const LoadingSpinner = styled.div`
+  width: 8rem;
+  height: 8rem;
+  border: 2px solid ${({ theme }) => theme.colors.border.primary};
+  border-top: 2px solid ${({ theme }) => theme.colors.status.info};
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
 // Register ChartJS components
 ChartJS.register(
   CategoryScale,
@@ -28,7 +103,7 @@ ChartJS.register(
   PointElement,
   LineElement,
   BarElement,
-  Title,
+  ChartTitle,
   Tooltip,
   Legend,
   ArcElement
@@ -61,42 +136,42 @@ const Dashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
+      <LoadingContainer>
+        <LoadingSpinner />
+      </LoadingContainer>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <DashboardContainer>
+      <DashboardContent>
         {/* Header with connection status */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Fraud Detection Dashboard</h1>
-              <p className="text-gray-600 mt-2">Real-time monitoring of transactions and fraud alerts</p>
-            </div>
+        <Header>
+          <HeaderContent>
+            <HeaderText>
+              <Title>Fraud Detection Dashboard</Title>
+              <Subtitle>Real-time monitoring of transactions and fraud alerts</Subtitle>
+            </HeaderText>
             <ConnectionStatus />
-          </div>
-        </div>
+          </HeaderContent>
+        </Header>
 
         {/* Stats Cards */}
         <StatsCards />
 
         {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <ChartsGrid>
           <TransactionVolumeChart />
           <RiskDistributionChart />
-        </div>
+        </ChartsGrid>
 
         {/* Alert Trends Chart */}
         <AlertTrendsChart />
 
         {/* Recent Alerts Table */}
         <AlertsTable />
-      </div>
-    </div>
+      </DashboardContent>
+    </DashboardContainer>
   );
 };
 
