@@ -1,5 +1,5 @@
 import React from 'react';
-import { useDashboardStore } from '../stores';
+import { useDashboardStore } from '@/stores';
 
 const ConnectionStatus: React.FC = () => {
   const connectionStatus = useDashboardStore(state => state.connectionStatus);

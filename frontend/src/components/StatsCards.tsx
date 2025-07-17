@@ -1,5 +1,5 @@
 import React from 'react';
-import { useDashboardStore } from '../stores';
+import { useDashboardStore } from '@/stores';
 
 const StatsCards: React.FC = () => {
   const stats = useDashboardStore(state => state.stats);

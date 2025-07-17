@@ -1,6 +1,6 @@
 import { format, startOfHour } from 'date-fns';
-import apiService, { type DashboardStats } from './api';
-import { type Alert, type Transaction } from './websocket';
+import apiService, { type DashboardStats } from '@/services/api';
+import { type Alert, type Transaction } from '@/services/websocket';
 
 export interface HourlyData {
   [key: string]: number; // hour key -> count

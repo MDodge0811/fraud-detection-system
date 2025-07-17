@@ -1,6 +1,6 @@
 import React from 'react';
 import { Line } from 'react-chartjs-2';
-import { useDashboardStore } from '../../stores';
+import { useDashboardStore } from '@/stores';
 
 const TransactionVolumeChart: React.FC = () => {
   const getTransactionVolumeData = useDashboardStore(state => state.getTransactionVolumeData);

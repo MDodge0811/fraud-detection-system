@@ -1,6 +1,6 @@
 import React from 'react';
 import { format } from 'date-fns';
-import { useDashboardStore } from '../stores';
+import { useDashboardStore } from '@/stores';
 
 const AlertsTable: React.FC = () => {
   const recentAlerts = useDashboardStore(state => state.recentAlerts);

@@ -1,2 +1,2 @@
-export { useDashboardStore } from './dashboardStore';
-export { useWebSocketStore } from './websocketStore'; 
+export { useDashboardStore } from '@/stores/dashboardStore';
+export { useWebSocketStore } from '@/stores/websocketStore'; 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Bar } from 'react-chartjs-2';
-import { useDashboardStore } from '../../stores';
+import { useDashboardStore } from '@/stores';
 
 const AlertTrendsChart: React.FC = () => {
   const getAlertTrendsData = useDashboardStore(state => state.getAlertTrendsData);

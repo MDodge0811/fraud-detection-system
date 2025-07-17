@@ -13,13 +13,13 @@ import {
 import { Chart as ChartJS } from 'chart.js';
 
 // Import stores
-import { useDashboardStore, useWebSocketStore } from '../stores';
+import { useDashboardStore, useWebSocketStore } from '@/stores';
 
 // Import components
-import StatsCards from './StatsCards';
-import ConnectionStatus from './ConnectionStatus';
-import AlertsTable from './AlertsTable';
-import { TransactionVolumeChart, RiskDistributionChart, AlertTrendsChart } from './charts';
+import StatsCards from '@/components/StatsCards';
+import ConnectionStatus from '@/components/ConnectionStatus';
+import AlertsTable from '@/components/AlertsTable';
+import { TransactionVolumeChart, RiskDistributionChart, AlertTrendsChart } from '@/components/charts';
 
 // Register ChartJS components
 ChartJS.register(

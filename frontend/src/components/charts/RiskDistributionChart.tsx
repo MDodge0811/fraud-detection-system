@@ -1,6 +1,6 @@
 import React from 'react';
 import { Doughnut } from 'react-chartjs-2';
-import { useDashboardStore } from '../../stores';
+import { useDashboardStore } from '@/stores';
 
 const RiskDistributionChart: React.FC = () => {
   const getRiskDistributionData = useDashboardStore(state => state.getRiskDistributionData);

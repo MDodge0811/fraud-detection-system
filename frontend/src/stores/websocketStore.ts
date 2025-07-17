@@ -1,9 +1,9 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import websocketService from '../services/websocket';
-import { type RealtimeEvent, type Transaction, type Alert } from '../services/websocket';
-import { type DashboardStats } from '../services/api';
-import { useDashboardStore } from './dashboardStore';
+import websocketService from '@/services/websocket';
+import { type RealtimeEvent, type Transaction, type Alert } from '@/services/websocket';
+import { type DashboardStats } from '@/services/api';
+import { useDashboardStore } from '@/stores/dashboardStore';
 
 interface WebSocketState {
   // Connection state
