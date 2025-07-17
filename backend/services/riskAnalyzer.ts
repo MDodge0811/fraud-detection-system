@@ -1,5 +1,23 @@
 import { prisma } from '@/prisma/client';
 
+// Constants for risk analysis
+const MAX_AMOUNT = 10000; // Maximum transaction amount for normalization
+const DEVICE_AGE_NORMALIZATION_HOURS = 24; // Max device age for normalization
+const MAX_MERCHANT_RISK = 100; // Merchant risk is 0-100
+const MAX_TRANSACTION_FREQUENCY = 10; // Max transactions in 5 min for normalization
+const MAX_AVG_AMOUNT = 5000; // Max average user amount for normalization
+const HIGH_RISK_MERCHANT_THRESHOLD = 80; // Merchant risk > 80 is high
+const HIGH_TRANSACTION_FREQUENCY = 5; // More than 5 transactions in 5 min is high
+const NEW_DEVICE_HOURS = 1; // Device age < 1 hour is new
+const AMOUNT_MULTIPLIER = 1.5; // Multiplier for high amount
+const FREQUENCY_MULTIPLIER = 1.3; // Multiplier for high frequency
+const NEW_DEVICE_MULTIPLIER = 1.4; // Multiplier for new device
+const HIGH_MERCHANT_MULTIPLIER = 1.6; // Multiplier for high-risk merchant
+const CRITICAL_RISK = 90;
+const HIGH_RISK = 75;
+const MEDIUM_RISK = 50;
+const LOW_RISK = 25;
+
 // Feature extraction functions
 async function getTransactionFeatures(transactionId: string, userId: string, deviceId: string, merchantId: string, amount: number) {
   try {
@@ -45,11 +63,11 @@ async function getTransactionFeatures(transactionId: string, userId: string, dev
       0;
 
     // Normalize features
-    const normalizedAmount = amount / 10000; // Normalize to 0-1 range
-    const normalizedDeviceAge = Math.min(deviceAge / 24, 1); // Normalize to 0-1 (max 24 hours)
-    const normalizedMerchantRisk = merchantRisk / 100; // Already 0-1
-    const normalizedFrequency = Math.min(recentTransactions / 10, 1); // Normalize to 0-1 (max 10 transactions)
-    const normalizedAvgAmount = Math.min(avgUserAmount / 5000, 1); // Normalize to 0-1 (max $5000)
+    const normalizedAmount = amount / MAX_AMOUNT; // Normalize to 0-1 range
+    const normalizedDeviceAge = Math.min(deviceAge / DEVICE_AGE_NORMALIZATION_HOURS, 1); // Normalize to 0-1 (max 24 hours)
+    const normalizedMerchantRisk = merchantRisk / MAX_MERCHANT_RISK; // Already 0-1
+    const normalizedFrequency = Math.min(recentTransactions / MAX_TRANSACTION_FREQUENCY, 1); // Normalize to 0-1 (max 10 transactions)
+    const normalizedAvgAmount = Math.min(avgUserAmount / MAX_AVG_AMOUNT, 1); // Normalize to 0-1 (max $5000)
 
     return {
       normalizedAmount,
@@ -69,7 +87,7 @@ async function getTransactionFeatures(transactionId: string, userId: string, dev
     console.error('Error extracting transaction features:', error);
     // Return default features if extraction fails
     return {
-      normalizedAmount: amount / 10000,
+      normalizedAmount: amount / MAX_AMOUNT,
       normalizedDeviceAge: 0,
       normalizedMerchantRisk: 0.5,
       normalizedFrequency: 0,
@@ -110,23 +128,23 @@ function calculateRiskScore(features: any): number {
   const riskMultipliers = [];
 
   // High amount relative to user's average
-  if (features.normalizedAmount > features.normalizedAvgAmount * 3) {
-    riskMultipliers.push(1.5);
+  if (features.normalizedAmount > features.normalizedAvgAmount * AMOUNT_MULTIPLIER) {
+    riskMultipliers.push(AMOUNT_MULTIPLIER);
   }
 
   // High frequency transactions
-  if (features.raw.recentTransactions > 5) {
-    riskMultipliers.push(1.3);
+  if (features.raw.recentTransactions > HIGH_TRANSACTION_FREQUENCY) {
+    riskMultipliers.push(FREQUENCY_MULTIPLIER);
   }
 
   // Very new device
-  if (features.raw.deviceAge < 1) {
-    riskMultipliers.push(1.4);
+  if (features.raw.deviceAge < NEW_DEVICE_HOURS) {
+    riskMultipliers.push(NEW_DEVICE_MULTIPLIER);
   }
 
   // High-risk merchant
-  if (features.raw.merchantRisk > 80) {
-    riskMultipliers.push(1.6);
+  if (features.raw.merchantRisk > HIGH_RISK_MERCHANT_THRESHOLD) {
+    riskMultipliers.push(HIGH_MERCHANT_MULTIPLIER);
   }
 
   // Apply multipliers
@@ -157,19 +175,19 @@ export async function analyzeTransactionRisk(
     // Generate risk reasons
     const reasons: string[] = [];
     
-    if (features.raw.merchantRisk > 80) {
+    if (features.raw.merchantRisk > HIGH_RISK_MERCHANT_THRESHOLD) {
       reasons.push(`High-risk merchant (${features.raw.merchantRisk}%)`);
     }
     
-    if (features.raw.recentTransactions > 5) {
+    if (features.raw.recentTransactions > HIGH_TRANSACTION_FREQUENCY) {
       reasons.push(`High transaction frequency (${features.raw.recentTransactions} in 5 min)`);
     }
     
-    if (features.raw.deviceAge < 1) {
+    if (features.raw.deviceAge < NEW_DEVICE_HOURS) {
       reasons.push(`New device (${features.raw.deviceAge} hours old)`);
     }
     
-    if (features.normalizedAmount > features.normalizedAvgAmount * 3) {
+    if (features.normalizedAmount > features.normalizedAvgAmount * AMOUNT_MULTIPLIER) {
       reasons.push(`Amount significantly higher than average`);
     }
     
@@ -187,7 +205,7 @@ export async function analyzeTransactionRisk(
     // Return default risk score if analysis fails
     return {
       riskScore: 50,
-      features: { normalizedAmount: amount / 10000 },
+      features: { normalizedAmount: amount / MAX_AMOUNT },
       reasons: ['Risk analysis failed - using default score']
     };
   }
@@ -195,18 +213,18 @@ export async function analyzeTransactionRisk(
 
 // Get risk level description
 export function getRiskLevel(riskScore: number): string {
-  if (riskScore >= 90) return 'Critical';
-  if (riskScore >= 75) return 'High';
-  if (riskScore >= 50) return 'Medium';
-  if (riskScore >= 25) return 'Low';
+  if (riskScore >= CRITICAL_RISK) return 'Critical';
+  if (riskScore >= HIGH_RISK) return 'High';
+  if (riskScore >= MEDIUM_RISK) return 'Medium';
+  if (riskScore >= LOW_RISK) return 'Low';
   return 'Very Low';
 }
 
 // Get risk color for UI
 export function getRiskColor(riskScore: number): string {
-  if (riskScore >= 90) return '#dc2626'; // Red
-  if (riskScore >= 75) return '#ea580c'; // Orange
-  if (riskScore >= 50) return '#d97706'; // Amber
-  if (riskScore >= 25) return '#65a30d'; // Green
+  if (riskScore >= CRITICAL_RISK) return '#dc2626'; // Red
+  if (riskScore >= HIGH_RISK) return '#ea580c'; // Orange
+  if (riskScore >= MEDIUM_RISK) return '#d97706'; // Amber
+  if (riskScore >= LOW_RISK) return '#65a30d'; // Green
   return '#16a34a'; // Dark green
 } 
