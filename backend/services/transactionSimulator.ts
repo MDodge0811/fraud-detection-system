@@ -7,8 +7,6 @@ function generateRandomAmount(): number {
   return Math.floor(Math.random() * 10000) + 1;
 }
 
-
-
 async function getRandomUser() {
   const users = await prisma.users.findMany();
   if (users.length === 0) return null;
@@ -70,6 +68,26 @@ export async function simulateTransaction() {
       }
     });
 
+    // Create training data record for ML model
+    await prisma.training_data.create({
+      data: {
+        transaction_id: transaction.transaction_id,
+        features_json: {
+          amount: amount,
+          device_age: riskAnalysis.features.raw?.deviceAge || 0,
+          merchant_risk: riskAnalysis.features.raw?.merchantRisk || 50,
+          transaction_frequency: riskAnalysis.features.raw?.recentTransactions || 0,
+          avg_user_amount: riskAnalysis.features.raw?.avgUserAmount || 0,
+          normalized_amount: riskAnalysis.features.normalizedAmount || 0,
+          normalized_device_age: riskAnalysis.features.normalizedDeviceAge || 0,
+          normalized_merchant_risk: riskAnalysis.features.normalizedMerchantRisk || 0.5,
+          normalized_frequency: riskAnalysis.features.normalizedFrequency || 0,
+          normalized_avg_amount: riskAnalysis.features.normalizedAvgAmount || 0
+        },
+        label: riskAnalysis.riskScore >= 75 ? 0 : 1 // 0 or 1 for legitimate
+      }
+    });
+
     // Create alert if risk score is high
     if (riskAnalysis.riskScore >= 75) {
       const riskLevel = getRiskLevel(riskAnalysis.riskScore);
@@ -96,7 +114,7 @@ export async function simulateTransaction() {
 
 // Start transaction simulation
 export function startTransactionSimulation() {
-  console.log('🔄 Starting transaction simulation (every 5 seconds)...');
+  console.log('🔄 Starting transaction simulation (every5seconds)...');
   
   // Generate initial transaction
   simulateTransaction();
