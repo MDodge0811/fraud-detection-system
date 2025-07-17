@@ -1,4 +1,4 @@
-import { prisma } from '../prisma/client';
+import { prisma } from '@/prisma/client';
 
 // Feature extraction functions
 async function getTransactionFeatures(transactionId: string, userId: string, deviceId: string, merchantId: string, amount: number) {

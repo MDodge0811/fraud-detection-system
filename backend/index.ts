@@ -1,10 +1,10 @@
 import express from 'express';
-import { prisma } from './prisma/client';
+import { prisma } from '@/prisma/client';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import { startTransactionSimulation, stopTransactionSimulation, getSimulationStatus, analyzeTransactionRisk } from './services';
+import { startTransactionSimulation, stopTransactionSimulation, getSimulationStatus, analyzeTransactionRisk } from '@/services';
 
 // Extend global type for simulation interval and WebSocket server
 declare global {
