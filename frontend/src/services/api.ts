@@ -57,21 +57,31 @@ class ApiService {
 
   // Dashboard endpoints
   async getDashboardStats(): Promise<DashboardStats> {
-    return this.request<DashboardStats>('/dashboard/stats');
+    const response = await this.request<{ success: boolean; data: DashboardStats }>('/dashboard/stats');
+    return response.data;
   }
 
   // Transaction endpoints
-  async getTransactions(limit: number = 100): Promise<Transaction[]> {
-    return this.request<Transaction[]>(`/transactions?limit=${limit}`);
+  async getTransactions(limit: number = 100, allTime: boolean = false): Promise<Transaction[]> {
+    const params = new URLSearchParams();
+    if (limit !== 100) params.append('limit', limit.toString());
+    if (allTime) params.append('allTime', 'true');
+    const response = await this.request<{ success: boolean; data: Transaction[]; count: number }>(`/transactions?${params.toString()}`);
+    return response.data;
   }
 
   async getTransactionById(id: string): Promise<Transaction> {
-    return this.request<Transaction>(`/transactions/${id}`);
+    const response = await this.request<{ success: boolean; data: Transaction }>(`/transactions/${id}`);
+    return response.data;
   }
 
   // Alert endpoints
-  async getAlerts(limit: number = 50): Promise<Alert[]> {
-    return this.request<Alert[]>(`/alerts?limit=${limit}`);
+  async getAlerts(limit: number = 50, allTime: boolean = false): Promise<Alert[]> {
+    const params = new URLSearchParams();
+    if (limit !== 50) params.append('limit', limit.toString());
+    if (allTime) params.append('allTime', 'true');
+    const response = await this.request<{ success: boolean; data: Alert[]; count: number }>(`/alerts?${params.toString()}`);
+    return response.data;
   }
 
   async resolveAlert(alertId: string): Promise<void> {

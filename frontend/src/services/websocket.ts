@@ -34,6 +34,12 @@ export interface Transaction {
   devices?: {
     fingerprint: string;
   };
+  risk_signals?: Array<{
+    signal_id: string;
+    risk_score: number;
+    signal_type: string;
+    created_at: string;
+  }>;
 }
 
 export interface Alert {

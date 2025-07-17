@@ -17,7 +17,7 @@ export interface ChartData {
   datasets: Array<{
     label: string;
     data: number[];
-    borderColor?: string;
+    borderColor?: string | string[];
     backgroundColor?: string | string[];
     tension?: number;
     borderWidth?: number;
@@ -52,11 +52,11 @@ class DashboardDataService {
       // Transaction volume
       this.transactionVolumeData[hourKey] = (this.transactionVolumeData[hourKey] || 0) + 1;
       
-      // Risk distribution
-      const riskLevel = transaction.merchants?.risk_level || 50;
-      if (riskLevel >= 75) {
+      // Risk distribution - use calculated risk score from risk_signals
+      const riskScore = transaction.risk_signals?.[0]?.risk_score || 50;
+      if (riskScore >= 75) {
         this.riskDistributionData.high++;
-      } else if (riskLevel >= 50) {
+      } else if (riskScore >= 50) {
         this.riskDistributionData.medium++;
       } else {
         this.riskDistributionData.low++;
@@ -79,11 +79,11 @@ class DashboardDataService {
     // Update transaction volume
     this.transactionVolumeData[hourKey] = (this.transactionVolumeData[hourKey] || 0) + 1;
 
-    // Update risk distribution
-    const riskLevel = transaction.merchants?.risk_level || 50;
-    if (riskLevel >= 75) {
+    // Update risk distribution - use calculated risk score from risk_signals
+    const riskScore = transaction.risk_signals?.[0]?.risk_score || 50;
+    if (riskScore >= 75) {
       this.riskDistributionData.high++;
-    } else if (riskLevel >= 50) {
+    } else if (riskScore >= 50) {
       this.riskDistributionData.medium++;
     } else {
       this.riskDistributionData.low++;
@@ -140,7 +140,11 @@ class DashboardDataService {
             'rgba(251, 191, 36, 0.8)',
             'rgba(239, 68, 68, 0.8)',
           ],
-          borderColor: 'rgb(34, 197, 94)',
+          borderColor: [
+            'rgb(34, 197, 94)',
+            'rgb(251, 191, 36)',
+            'rgb(239, 68, 68)',
+          ],
           borderWidth: 2,
         },
       ],
@@ -181,8 +185,8 @@ class DashboardDataService {
   }> {
     const [stats, alerts, transactions] = await Promise.all([
       apiService.getDashboardStats(),
-      apiService.getAlerts(50),
-      apiService.getTransactions(100)
+      apiService.getAlerts(50, true), // Get all-time alerts for charts
+      apiService.getTransactions(100, true) // Get all-time transactions for charts
     ]);
 
     return { stats, alerts, transactions };
