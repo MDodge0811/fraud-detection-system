@@ -3,6 +3,9 @@
 	"version": "1.0.0",
 	"main": "index.js",
 	"scripts": {
+		"docker:up": "docker compose -f ../docker-compose.test.yml up -d",
+		"docker:down": "docker compose -f ../docker-compose.test.yml down",
+		"test:integration": "npm run docker:up && NODE_ENV=test DATABASE_URL=postgresql://prisma:prisma@localhost:5433npx prisma migrate deploy --schema=./prisma/schema.prisma && NODE_ENV=test DATABASE_URL=postgresql://prisma:prisma@localhost:5433tests jest --runInBand && npm run docker:down",
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"dev": "ts-node index.ts",
 		"build": "tsc",
@@ -25,6 +28,7 @@
 		"ml": "^8.0.0",
 		"pdfkit": "^0.17.1",
 		"pg": "^8.16.3",
+		"socket.io": "^4.8.1",
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
@@ -32,6 +36,7 @@
 		"@types/jest": "^30.0.0",
 		"@types/node": "^24.0.14",
 		"@types/pg": "^8.15.4",
+		"@types/socket.io": "^3.0.1",
 		"@types/supertest": "^6.0.3",
 		"@types/uuid": "^10.0.0",
 		"jest": "^30.0.4",

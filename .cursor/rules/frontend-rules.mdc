@@ -1,0 +1,8 @@
+---
+alwaysApply: true
+---
+These are the key libraries that we use, here is their documentation:
+chart.js: https://www.chartjs.org/docs/master/api/
+react-chartjs-2: https://react-chartjs-2.js.org/components
+@tanstack/react-table: https://tanstack.com/table/latest/docs/introduction
+date-fns: https://date-fns.org/docs/Getting-Started

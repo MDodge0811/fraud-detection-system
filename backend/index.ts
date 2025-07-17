@@ -2,11 +2,14 @@ import express from 'express';
 import { prisma } from './prisma/client';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import { startTransactionSimulation, stopTransactionSimulation, getSimulationStatus, analyzeTransactionRisk } from './services';
 
-// Extend global type for simulation interval
+// Extend global type for simulation interval and WebSocket server
 declare global {
   var simulationInterval: NodeJS.Timeout | undefined;
+  var io: Server | undefined;
 }
 
 // Load environment variables
@@ -14,10 +17,25 @@ dotenv.config();
 
 // Initialize Express app
 const app = express();
+const server = createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
+
+// Store io globally for access in other modules
+global.io = io;
+
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+  credentials: true
+}));
 app.use(express.json());
 
 // Health check endpoint
@@ -242,6 +260,46 @@ app.use('*', (req, res) => {
   });
 });
 
+// WebSocket connection handling
+io.on('connection', (socket) => {
+  console.log('🔌 Client connected:', socket.id);
+  
+  // Send initial data to new client
+  socket.emit('connected', { message: 'Connected to fraud detection system' });
+  
+  socket.on('disconnect', () => {
+    console.log('🔌 Client disconnected:', socket.id);
+  });
+  
+  // Handle client requests for real-time data
+  socket.on('subscribe:alerts', () => {
+    socket.join('alerts');
+    console.log('📡 Client subscribed to alerts:', socket.id);
+  });
+  
+  socket.on('subscribe:transactions', () => {
+    socket.join('transactions');
+    console.log('📡 Client subscribed to transactions:', socket.id);
+  });
+  
+  socket.on('subscribe:dashboard', () => {
+    socket.join('dashboard');
+    console.log('📡 Client subscribed to dashboard updates:', socket.id);
+  });
+  
+  socket.on('unsubscribe:alerts', () => {
+    socket.leave('alerts');
+  });
+  
+  socket.on('unsubscribe:transactions', () => {
+    socket.leave('transactions');
+  });
+  
+  socket.on('unsubscribe:dashboard', () => {
+    socket.leave('dashboard');
+  });
+});
+
 // Start server
 async function startServer() {
   try {
@@ -249,12 +307,13 @@ async function startServer() {
     await prisma.$connect();
     console.log('✅ Database connected successfully');
 
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📊 Health check: http://localhost:${PORT}/health`);
       console.log(`🚨 Alerts endpoint: http://localhost:${PORT}/alerts`);
       console.log(`💳 Transactions endpoint: http://localhost:${PORT}/transactions`);
       console.log(`📈 Dashboard stats: http://localhost:${PORT}/dashboard/stats`);
+      console.log(`🔌 WebSocket server ready on ws://localhost:${PORT}`);
       
       // Start transaction simulation after server is running
       const simulationInterval = startTransactionSimulation();
