@@ -19,7 +19,7 @@ Your Fraud Detection System now has enterprise-grade CI/CD with GitHub Actions!
 - ✅ **Backend Tests**: Linting, type checking, tests with PostgreSQL
 - ✅ **Security Scanning**: Trivy vulnerability scanner
 - ✅ **Dependency Checks**: npm audit for security issues
-- ✅ **Code Quality**: SonarCloud analysis
+- ✅ **Code Quality**: SonarCloud analysis (using latest sonarqube-scan-action)
 
 #### Deployment Automation
 - ✅ **Production Deployments**: Automatic on main branch

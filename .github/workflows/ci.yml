@@ -169,10 +169,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          cd frontend && npm ci
+          cd ../backend && npm ci
+
+      - name: Generate coverage reports
+        run: |
+          cd frontend && npm run test:coverage || echo "Frontend coverage not available"
+          cd ../backend && npm run test:coverage || echo "Backend coverage not available"
+
       - name: Run SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: sonarqube-scan-action@master
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
@@ -180,4 +195,5 @@ jobs:
             -Dsonar.organization=your-org
             -Dsonar.sources=frontend/src,backend/src
             -Dsonar.tests=frontend/src,backend/src
-            -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info,backend/coverage/lcov.info 
+            -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info,backend/coverage/lcov.info
+            -Dsonar.host.url=https://sonarcloud.io 

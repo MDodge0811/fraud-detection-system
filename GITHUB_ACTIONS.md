@@ -24,7 +24,7 @@ This document describes the comprehensive GitHub Actions setup for the Fraud Det
 - **Backend Tests**: Linting, type checking, tests with PostgreSQL
 - **Security Scan**: Vulnerability scanning with Trivy
 - **Dependency Check**: npm audit for security issues
-- **Code Quality**: SonarCloud analysis
+- **Code Quality**: SonarCloud analysis (using latest sonarqube-scan-action)
 
 **Features:**
 - ✅ PostgreSQL service container for backend tests
@@ -295,6 +295,31 @@ vercel ls
 - Workflow permissions controlled by repository settings
 - PR workflows use limited permissions
 - Production deployments require main branch
+
+## 🔧 SonarCloud Setup (Optional)
+
+To enable code quality analysis with SonarCloud:
+
+1. **Create SonarCloud Account**:
+   - Go to [sonarcloud.io](https://sonarcloud.io)
+   - Sign up with your GitHub account
+
+2. **Create Project**:
+   - Import your GitHub repository
+   - Set project key to `fraud-detection-system`
+   - Note your organization name
+
+3. **Get Token**:
+   - Go to Account → Security → Generate Tokens
+   - Copy the token
+
+4. **Add to GitHub Secrets**:
+   - Add `SONAR_TOKEN` with your SonarCloud token
+   - Update the organization name in the workflow file
+
+5. **Update Workflow**:
+   - Replace `your-org` with your actual SonarCloud organization name
+   - The workflow will automatically run code quality analysis
 
 ## 📚 Additional Resources
 
