@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import websocketService from '@/services/websocket';
-import { type RealtimeEvent, type Transaction, type Alert } from '@/services/websocket';
+import websocketService, { type RealtimeEvent, type Transaction, type Alert } from '@/services/websocket';
 import { type DashboardStats } from '@/services/api';
 import { useDashboardStore } from '@/stores/dashboardStore';
 
@@ -13,9 +12,9 @@ interface WebSocketState {
   // Internal state (not exposed)
   connectionInterval?: NodeJS.Timeout;
   eventHandlers?: {
-    handleNewTransaction: (data: unknown) => void;
-    handleNewAlert: (data: unknown) => void;
-    handleDashboardStats: (data: unknown) => void;
+    handleNewTransaction: (_data: unknown) => void;
+    handleNewAlert: (_data: unknown) => void;
+    handleDashboardStats: (_data: unknown) => void;
   };
 
   // Actions

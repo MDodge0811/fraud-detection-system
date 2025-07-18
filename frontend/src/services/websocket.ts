@@ -144,7 +144,8 @@ class WebSocketService {
   }
 
   // Subscribe to events
-  on(event: string, callback: (data: unknown) => void) {
+
+  on(event: string, callback: (_data: unknown) => void) {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, new Set());
     }
@@ -152,7 +153,8 @@ class WebSocketService {
   }
 
   // Unsubscribe from events
-  off(event: string, callback: (data: unknown) => void) {
+
+  off(event: string, callback: (_data: unknown) => void) {
     this.listeners.get(event)?.delete(callback);
   }
 

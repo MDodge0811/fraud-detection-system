@@ -2,8 +2,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { type DashboardStats } from '@/services/api';
 import { type Alert, type Transaction } from '@/services/websocket';
-import { type ChartData } from '@/services/dashboardData';
-import dashboardDataService from '@/services/dashboardData';
+import dashboardDataService, { type ChartData } from '@/services/dashboardData';
 
 interface DashboardState {
   // Connection state
