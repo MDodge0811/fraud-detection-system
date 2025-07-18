@@ -6,11 +6,11 @@ import {
   LineElement,
   BarElement,
   Title as ChartTitle,
+  Chart as ChartJS,
   Tooltip,
   Legend,
   ArcElement,
 } from 'chart.js';
-import { Chart as ChartJS } from 'chart.js';
 import styled from 'styled-components';
 
 // Import stores
@@ -21,80 +21,6 @@ import StatsCards from '@/components/StatsCards';
 import ConnectionStatus from '@/components/ConnectionStatus';
 import AlertsTable from '@/components/AlertsTable';
 import { TransactionVolumeChart, RiskDistributionChart, AlertTrendsChart } from '@/components/charts';
-
-// Styled components
-const DashboardContainer = styled.div`
-  min-height: 100vh;
-  background-color: ${({ theme }) => theme.colors.background.primary};
-  padding: ${({ theme }) => theme.spacing.xl};
-`;
-
-const DashboardContent = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-`;
-
-const Header = styled.div`
-  margin-bottom: ${({ theme }) => theme.spacing.xxl};
-`;
-
-const HeaderContent = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: ${({ theme }) => theme.spacing.md};
-  }
-`;
-
-const HeaderText = styled.div``;
-
-const Title = styled.h1`
-  font-size: ${({ theme }) => theme.typography.fontSizes['3xl']};
-  font-weight: ${({ theme }) => theme.typography.fontWeights.bold};
-  color: ${({ theme }) => theme.colors.text.primary};
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
-`;
-
-const Subtitle = styled.p`
-  font-size: ${({ theme }) => theme.typography.fontSizes.base};
-  color: ${({ theme }) => theme.colors.text.secondary};
-`;
-
-const ChartsGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: ${({ theme }) => theme.spacing.xl};
-  margin-bottom: ${({ theme }) => theme.spacing.xxl};
-  
-  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
-    grid-template-columns: 1fr 1fr;
-  }
-`;
-
-const LoadingContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-`;
-
-const LoadingSpinner = styled.div`
-  width: 8rem;
-  height: 8rem;
-  border: 2px solid ${({ theme }) => theme.colors.border.primary};
-  border-top: 2px solid ${({ theme }) => theme.colors.status.info};
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-`;
 
 // Register ChartJS components
 ChartJS.register(
@@ -176,3 +102,80 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
+
+// ============================================================================
+// STYLED COMPONENTS
+// ============================================================================
+
+const DashboardContainer = styled.div`
+  min-height: 100vh;
+  background-color: ${({ theme }) => theme.colors.background.primary};
+  padding: ${({ theme }) => theme.spacing.xl};
+`;
+
+const DashboardContent = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+`;
+
+const Header = styled.div`
+  margin-bottom: ${({ theme }) => theme.spacing.xxl};
+`;
+
+const HeaderContent = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: ${({ theme }) => theme.spacing.md};
+  }
+`;
+
+const HeaderText = styled.div``;
+
+const Title = styled.h1`
+  font-size: ${({ theme }) => theme.typography.fontSizes['3xl']};
+  font-weight: ${({ theme }) => theme.typography.fontWeights.bold};
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
+`;
+
+const Subtitle = styled.p`
+  font-size: ${({ theme }) => theme.typography.fontSizes.base};
+  color: ${({ theme }) => theme.colors.text.secondary};
+`;
+
+const ChartsGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: ${({ theme }) => theme.spacing.xl};
+  margin-bottom: ${({ theme }) => theme.spacing.xxl};
+  
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    grid-template-columns: 1fr 1fr;
+  }
+`;
+
+const LoadingContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+`;
+
+const LoadingSpinner = styled.div`
+  width: 8rem;
+  height: 8rem;
+  border: 2px solid ${({ theme }) => theme.colors.border.primary};
+  border-top: 2px solid ${({ theme }) => theme.colors.status.info};
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;

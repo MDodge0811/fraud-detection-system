@@ -8,3 +8,4 @@ react-chartjs-2: https://react-chartjs-2.js.org/components
 date-fns: https://date-fns.org/docs/Getting-Started
 zustand: https://zustand.docs.pmnd.rs/getting-started/introduction
 use styled components: https://styled-components.com/docs
+Styles should be put at the bottom of a file.

@@ -2,7 +2,25 @@ import React from 'react';
 import styled from 'styled-components';
 import { useDashboardStore } from '@/stores';
 
-// Styled components
+const ConnectionStatus: React.FC = () => {
+  const connectionStatus = useDashboardStore(state => state.connectionStatus);
+
+  return (
+    <StatusContainer>
+      <StatusDot status={connectionStatus} />
+      <StatusText>
+        {connectionStatus === 'connected' ? 'Live' : connectionStatus}
+      </StatusText>
+    </StatusContainer>
+  );
+};
+
+export default ConnectionStatus;
+
+// ============================================================================
+// STYLED COMPONENTS
+// ============================================================================
+
 const StatusContainer = styled.div`
   display: flex;
   align-items: center;
@@ -27,18 +45,3 @@ const StatusText = styled.span`
   color: ${({ theme }) => theme.colors.text.secondary};
   text-transform: capitalize;
 `;
-
-const ConnectionStatus: React.FC = () => {
-  const connectionStatus = useDashboardStore(state => state.connectionStatus);
-
-  return (
-    <StatusContainer>
-      <StatusDot status={connectionStatus} />
-      <StatusText>
-        {connectionStatus === 'connected' ? 'Live' : connectionStatus}
-      </StatusText>
-    </StatusContainer>
-  );
-};
-
-export default ConnectionStatus;

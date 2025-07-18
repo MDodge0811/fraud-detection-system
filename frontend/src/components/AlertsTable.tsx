@@ -3,7 +3,131 @@ import styled from 'styled-components';
 import { format } from 'date-fns';
 import { useDashboardStore } from '@/stores';
 
-// Styled components
+const AlertsTable: React.FC = () => {
+  const {
+    getPaginatedAlerts,
+    getAlertsPageInfo,
+    nextAlertsPage,
+    prevAlertsPage,
+    setAlertsPage,
+  } = useDashboardStore();
+
+  const paginatedAlerts = getPaginatedAlerts();
+  const { currentPage, totalPages, totalAlerts } = getAlertsPageInfo();
+
+  const getRiskLevel = (score: number): 'high' | 'medium' | 'low' => {
+    if (score >= 90) return 'high';
+    if (score >= 75) return 'medium';
+    return 'low';
+  };
+
+  return (
+    <TableContainer>
+      <TableHeader>
+        <HeaderContent>
+          <TableTitle>Recent Alerts</TableTitle>
+          <TableInfo>
+              Showing {((currentPage - 1) * 10) + 1} to{' '}
+            {Math.min(currentPage * 10, totalAlerts)} of {totalAlerts} alerts
+          </TableInfo>
+        </HeaderContent>
+      </TableHeader>
+
+      <TableWrapper>
+        <StyledTable>
+          <TableHead>
+            <tr>
+              <TableHeaderCell>Alert ID</TableHeaderCell>
+              <TableHeaderCell>Risk Score</TableHeaderCell>
+              <TableHeaderCell>Reason</TableHeaderCell>
+              <TableHeaderCell>Status</TableHeaderCell>
+              <TableHeaderCell>Time</TableHeaderCell>
+            </tr>
+          </TableHead>
+          <TableBody>
+            {paginatedAlerts.map((alert) => (
+              <TableRow key={alert.alert_id}>
+                <TableCell>
+                  {alert.alert_id.slice(0, 8)}...
+                </TableCell>
+                <TableCell>
+                  <RiskBadge riskLevel={getRiskLevel(alert.risk_score)}>
+                    {alert.risk_score}%
+                  </RiskBadge>
+                </TableCell>
+                <TableCellText>
+                  {alert.reason}
+                </TableCellText>
+                <TableCell>
+                  <StatusBadge status={alert.status}>
+                    {alert.status}
+                  </StatusBadge>
+                </TableCell>
+                <TableCell>
+                  {format(new Date(alert.created_at), 'MMM dd, HH:mm')}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </StyledTable>
+      </TableWrapper>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <PaginationContainer>
+          <PaginationContent>
+            <PaginationInfo>
+              Page {currentPage} of {totalPages}
+            </PaginationInfo>
+            <PaginationControls>
+              <PaginationButton
+                variant="secondary"
+                onClick={prevAlertsPage}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </PaginationButton>
+
+              {/* Page numbers */}
+              <PageNumbers>
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const pageNum = i + 1;
+                  return (
+                    <PaginationButton
+                      key={pageNum}
+                      variant={pageNum === currentPage ? 'primary' : undefined}
+                      onClick={() => setAlertsPage(pageNum)}
+                    >
+                      {pageNum}
+                    </PaginationButton>
+                  );
+                })}
+                {totalPages > 5 && (
+                  <Ellipsis>...</Ellipsis>
+                )}
+              </PageNumbers>
+
+              <PaginationButton
+                variant="secondary"
+                onClick={nextAlertsPage}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </PaginationButton>
+            </PaginationControls>
+          </PaginationContent>
+        </PaginationContainer>
+      )}
+    </TableContainer>
+  );
+};
+
+export default AlertsTable;
+
+// ============================================================================
+// STYLED COMPONENTS
+// ============================================================================
+
 const TableContainer = styled.div`
   background-color: ${({ theme }) => theme.colors.background.card};
   border: 1px solid ${({ theme }) => theme.colors.border.primary};
@@ -183,123 +307,3 @@ const Ellipsis = styled.span`
   font-size: ${({ theme }) => theme.typography.fontSizes.sm};
   color: ${({ theme }) => theme.colors.text.muted};
 `;
-
-const AlertsTable: React.FC = () => {
-  const {
-    getPaginatedAlerts,
-    getAlertsPageInfo,
-    nextAlertsPage,
-    prevAlertsPage,
-    setAlertsPage,
-  } = useDashboardStore();
-
-  const paginatedAlerts = getPaginatedAlerts();
-  const { currentPage, totalPages, totalAlerts } = getAlertsPageInfo();
-
-  const getRiskLevel = (score: number): 'high' | 'medium' | 'low' => {
-    if (score >= 90) return 'high';
-    if (score >= 75) return 'medium';
-    return 'low';
-  };
-
-  return (
-    <TableContainer>
-      <TableHeader>
-        <HeaderContent>
-          <TableTitle>Recent Alerts</TableTitle>
-          <TableInfo>
-            Showing {((currentPage - 1) * 10) + 1} to {Math.min(currentPage * 10, totalAlerts)} of {totalAlerts} alerts
-          </TableInfo>
-        </HeaderContent>
-      </TableHeader>
-
-      <TableWrapper>
-        <StyledTable>
-          <TableHead>
-            <tr>
-              <TableHeaderCell>Alert ID</TableHeaderCell>
-              <TableHeaderCell>Risk Score</TableHeaderCell>
-              <TableHeaderCell>Reason</TableHeaderCell>
-              <TableHeaderCell>Status</TableHeaderCell>
-              <TableHeaderCell>Time</TableHeaderCell>
-            </tr>
-          </TableHead>
-          <TableBody>
-            {paginatedAlerts.map((alert) => (
-              <TableRow key={alert.alert_id}>
-                <TableCell>
-                  {alert.alert_id.slice(0, 8)}...
-                </TableCell>
-                <TableCell>
-                  <RiskBadge riskLevel={getRiskLevel(alert.risk_score)}>
-                    {alert.risk_score}%
-                  </RiskBadge>
-                </TableCell>
-                <TableCellText>
-                  {alert.reason}
-                </TableCellText>
-                <TableCell>
-                  <StatusBadge status={alert.status}>
-                    {alert.status}
-                  </StatusBadge>
-                </TableCell>
-                <TableCell>
-                  {format(new Date(alert.created_at), 'MMM dd, HH:mm')}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </StyledTable>
-      </TableWrapper>
-
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <PaginationContainer>
-          <PaginationContent>
-            <PaginationInfo>
-              Page {currentPage} of {totalPages}
-            </PaginationInfo>
-            <PaginationControls>
-              <PaginationButton
-                variant="secondary"
-                onClick={prevAlertsPage}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </PaginationButton>
-
-              {/* Page numbers */}
-              <PageNumbers>
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  const pageNum = i + 1;
-                  return (
-                    <PaginationButton
-                      key={pageNum}
-                      variant={pageNum === currentPage ? 'primary' : undefined}
-                      onClick={() => setAlertsPage(pageNum)}
-                    >
-                      {pageNum}
-                    </PaginationButton>
-                  );
-                })}
-                {totalPages > 5 && (
-                  <Ellipsis>...</Ellipsis>
-                )}
-              </PageNumbers>
-
-              <PaginationButton
-                variant="secondary"
-                onClick={nextAlertsPage}
-                disabled={currentPage === totalPages}
-              >
-                Next
-              </PaginationButton>
-            </PaginationControls>
-          </PaginationContent>
-        </PaginationContainer>
-      )}
-    </TableContainer>
-  );
-};
-
-export default AlertsTable;
