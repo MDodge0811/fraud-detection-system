@@ -1,5 +1,6 @@
 import { prisma } from '../prisma/client';
-import { analyzeTransactionRisk, getRiskLevel } from './riskAnalyzer';
+import { getRiskLevel } from './riskAnalyzer';
+import { analyzeTransactionRiskML } from './mlRiskAnalyzer';
 import { Server } from 'socket.io';
 
 // Extend global type for WebSocket server
@@ -75,8 +76,8 @@ export async function simulateTransaction() {
       timestamp: new Date().toISOString(),
     });
 
-    // Analyze transaction risk using real ML-based scoring
-    const riskAnalysis = await analyzeTransactionRisk(
+    // Analyze transaction risk using ML-enhanced analyzer
+    const riskAnalysis = await analyzeTransactionRiskML(
       transaction.transaction_id,
       user.user_id,
       device.device_id,

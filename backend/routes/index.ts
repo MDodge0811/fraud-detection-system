@@ -1,6 +1,7 @@
 import express from 'express';
 import { prisma } from '../prisma/client';
 import { analyzeTransactionRisk, getSimulationStatus } from '../services';
+import mlRouter from './ml';
 
 const router = express.Router();
 // triggering a build
@@ -212,5 +213,8 @@ router.get('/risk-analysis/:transactionId', async (req, res) => {
     });
   }
 });
+
+// Mount ML routes
+router.use('/ml', mlRouter);
 
 export default router;
