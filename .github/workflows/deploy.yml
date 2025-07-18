@@ -24,6 +24,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Deploy Frontend
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch'
+    outputs:
+      url: ${{ steps.deploy.outputs.preview-url }}
     
     steps:
       - name: Checkout code
@@ -47,6 +49,7 @@ jobs:
           npm run build
 
       - name: Deploy to Vercel
+        id: deploy
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -64,13 +67,15 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `🚀 Frontend deployed to: ${{ steps.deploy.outputs.preview-url }}`
+              body: `🚀 Frontend deployed to: ${{ steps.deploy.outputs.url || 'Deployed successfully' }}`
             })
 
   deploy-backend:
     runs-on: ubuntu-latest
     name: Deploy Backend
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch'
+    outputs:
+      url: ${{ steps.deploy.outputs.preview-url }}
     
     steps:
       - name: Checkout code
@@ -99,6 +104,7 @@ jobs:
           npm run build
 
       - name: Deploy to Vercel
+        id: deploy
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -122,7 +128,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `🚀 Backend deployed to: ${{ steps.deploy.outputs.preview-url }}`
+              body: `🚀 Backend deployed to: ${{ steps.deploy.outputs.url || 'Deployed successfully' }}`
             })
 
   notify-deployment:
@@ -132,18 +138,6 @@ jobs:
     needs: [deploy-frontend, deploy-backend]
     
     steps:
-      - name: Notify Slack
-        if: secrets.SLACK_WEBHOOK_URL
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ job.status }}
-          channel: '#deployments'
-          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          text: |
-            🚀 Fraud Detection System deployed to production!
-            Frontend: ${{ needs.deploy-frontend.outputs.preview-url }}
-            Backend: ${{ needs.deploy-backend.outputs.preview-url }}
-
       - name: Create deployment summary
         uses: actions/github-script@v7
         with:
@@ -155,8 +149,8 @@ jobs:
             **Commit:** ${{ github.sha }}
             
             ### Services Deployed:
-            - ✅ Frontend: ${{ needs.deploy-frontend.outputs.preview-url }}
-            - ✅ Backend: ${{ needs.deploy-backend.outputs.preview-url }}
+            - ✅ Frontend: ${{ needs.deploy-frontend.outputs.url || 'Deployed successfully' }}
+            - ✅ Backend: ${{ needs.deploy-backend.outputs.url || 'Deployed successfully' }}
             
             ### Database:
             - ✅ Migrations applied
