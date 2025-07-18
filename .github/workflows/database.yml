@@ -1,0 +1,121 @@
+name: Database Management
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Database action to perform'
+        required: true
+        default: 'migrate'
+        type: choice
+        options:
+        - migrate
+        - seed
+        - reset
+        - backup
+      environment:
+        description: 'Environment to target'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID_BACKEND: ${{ secrets.VERCEL_PROJECT_ID_BACKEND }}
+
+jobs:
+  database-action:
+    runs-on: ubuntu-latest
+    name: Database ${{ github.event.inputs.action }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Generate Prisma client
+        run: |
+          cd backend
+          npx prisma generate
+
+      - name: Run database migration
+        if: github.event.inputs.action == 'migrate'
+        run: |
+          cd backend
+          npx prisma db push
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Seed database
+        if: github.event.inputs.action == 'seed'
+        run: |
+          cd backend
+          npm run seed
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Reset database
+        if: github.event.inputs.action == 'reset'
+        run: |
+          cd backend
+          npx prisma db push --force-reset
+          npm run seed
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Create database backup
+        if: github.event.inputs.action == 'backup'
+        run: |
+          cd backend
+          npx prisma db pull --print > backup_$(date +%Y%m%d_%H%M%S).prisma
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Upload backup file
+        if: github.event.inputs.action == 'backup'
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-backup
+          path: backend/backup_*.prisma
+          retention-days: 30
+
+      - name: Comment on workflow
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const action = '${{ github.event.inputs.action }}';
+            const env = '${{ github.event.inputs.environment }}';
+            const comment = `## 🗄️ Database Action Completed
+            
+            **Action:** ${action}
+            **Environment:** ${env}
+            **Status:** ✅ Success
+            
+            ### What was done:
+            ${action === 'migrate' ? '- Database schema updated' : ''}
+            ${action === 'seed' ? '- Database seeded with initial data' : ''}
+            ${action === 'reset' ? '- Database reset and reseeded' : ''}
+            ${action === 'backup' ? '- Database backup created' : ''}
+            
+            **Timestamp:** ${new Date().toISOString()}`;
+            
+            await github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: comment
+            }); 

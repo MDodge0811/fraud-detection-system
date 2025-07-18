@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "projects": {
+    "fraud-detection-frontend": {
+      "rootDirectory": "frontend",
+      "buildCommand": "npm run build",
+      "outputDirectory": "dist",
+      "framework": "vite",
+      "installCommand": "npm install",
+      "devCommand": "npm run dev"
+    },
+    "fraud-detection-backend": {
+      "rootDirectory": "backend",
+      "buildCommand": "npm run build",
+      "outputDirectory": ".",
+      "framework": "node",
+      "installCommand": "npm install",
+      "devCommand": "npm run dev"
+    }
+  },
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "develop": true
+    }
+  }
+} 

@@ -182,16 +182,63 @@ npm run docker:down    # Stop test database
 - **Rate Limiting**: API rate limiting
 - **Audit Logging**: Comprehensive security logging
 
-## 🚀 Deployment
+## 🚀 Deployment & CI/CD
 
-### Backend Deployment
+This project is configured for fully automated deployments using **GitHub Actions** and **Vercel**.
+
+### 🔄 CI/CD Pipeline
+
+#### Automated Workflows
+- **CI/CD**: Testing, linting, and quality checks on every push
+- **Preview Deployments**: Automatic preview URLs for pull requests
+- **Production Deployments**: Automatic deployment to production on main branch
+- **Database Management**: Safe database operations via GitHub Actions
+
+#### Quick Setup
+1. **Fork this repository** to your GitHub account
+2. **Set up GitHub Secrets** (see [GITHUB_ACTIONS.md](./GITHUB_ACTIONS.md))
+3. **Connect to Vercel** and import the repository
+4. **Deploy automatically** on every push to main branch
+
+#### Manual Deployment
+```bash
+# Frontend
+cd frontend
+vercel --prod
+
+# Backend
+cd backend
+vercel --prod
+```
+
+#### Environment Variables
+- `DATABASE_URL`: PostgreSQL connection string
+- `VITE_API_URL`: Backend API URL for frontend
+- `VITE_WS_URL`: WebSocket URL for frontend
+
+### 📋 Required GitHub Secrets
+```bash
+VERCEL_TOKEN=your_vercel_token
+VERCEL_ORG_ID=your_org_id
+VERCEL_PROJECT_ID_FRONTEND=your_frontend_project_id
+VERCEL_PROJECT_ID_BACKEND=your_backend_project_id
+DATABASE_URL=your_database_url
+```
+
+For detailed setup instructions, see:
+- [GITHUB_ACTIONS.md](./GITHUB_ACTIONS.md) - Complete CI/CD documentation
+- [DEPLOYMENT.md](./DEPLOYMENT.md) - Vercel deployment guide
+
+### Traditional Deployment
+
+#### Backend Deployment
 ```bash
 cd backend
 npm run build
 npm start
 ```
 
-### Frontend Deployment
+#### Frontend Deployment
 ```bash
 cd frontend
 npm run build

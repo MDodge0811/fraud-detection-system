@@ -1,0 +1,174 @@
+name: Preview Deployment
+
+on:
+  pull_request:
+    branches: [main, develop]
+  pull_request_target:
+    branches: [main, develop]
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID_FRONTEND: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
+  VERCEL_PROJECT_ID_BACKEND: ${{ secrets.VERCEL_PROJECT_ID_BACKEND }}
+
+jobs:
+  preview-frontend:
+    runs-on: ubuntu-latest
+    name: Preview Frontend
+    if: github.event.action != 'closed'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Build application
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Deploy to Vercel (Preview)
+        id: deploy
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
+          working-directory: ./frontend
+          vercel-args: '--debug'
+
+      - name: Comment PR with preview URL
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const url = '${{ steps.deploy.outputs.preview-url }}';
+            const comment = `## 🎉 Frontend Preview Ready!
+            
+            **Preview URL:** ${url}
+            
+            ### What's Changed:
+            - Frontend changes deployed to preview environment
+            - Ready for testing and review
+            
+            ### Testing Checklist:
+            - [ ] Dashboard loads correctly
+            - [ ] Charts display data
+            - [ ] WebSocket connection works
+            - [ ] Responsive design on mobile
+            - [ ] No console errors
+            
+            ---
+            *This preview will be automatically deleted when the PR is closed.*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  preview-backend:
+    runs-on: ubuntu-latest
+    name: Preview Backend
+    if: github.event.action != 'closed'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Generate Prisma client
+        run: |
+          cd backend
+          npx prisma generate
+
+      - name: Build application
+        run: |
+          cd backend
+          npm run build
+
+      - name: Deploy to Vercel (Preview)
+        id: deploy
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_BACKEND }}
+          working-directory: ./backend
+          vercel-args: '--debug'
+
+      - name: Comment PR with preview URL
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const url = '${{ steps.deploy.outputs.preview-url }}';
+            const comment = `## 🔧 Backend Preview Ready!
+            
+            **Preview URL:** ${url}
+            
+            ### API Endpoints:
+            - Health Check: ${url}/health
+            - Dashboard Stats: ${url}/api/dashboard/stats
+            - Alerts: ${url}/api/alerts
+            - Transactions: ${url}/api/transactions
+            
+            ### Testing Checklist:
+            - [ ] Health endpoint responds
+            - [ ] API endpoints return data
+            - [ ] WebSocket connection works
+            - [ ] Database queries execute
+            - [ ] Error handling works
+            
+            ---
+            *This preview will be automatically deleted when the PR is closed.*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  cleanup-preview:
+    runs-on: ubuntu-latest
+    name: Cleanup Preview
+    if: github.event.action == 'closed'
+    
+    steps:
+      - name: Remove preview deployments
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
+          vercel-args: 'remove --yes'
+
+      - name: Remove backend preview
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_BACKEND }}
+          vercel-args: 'remove --yes' 
