@@ -65,24 +65,35 @@ class WebSocketService {
   private socket: Socket | null = null;
   private isConnected = false;
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
+  private maxReconnectAttempts = 3;
   private reconnectDelay = 1000;
+  private pollingInterval: NodeJS.Timeout | null = null;
+  private usePolling = false;
+  private lastData: {
+    transactions: Transaction[];
+    alerts: Alert[];
+    dashboardStats: DashboardStats | null;
+  } = {
+    transactions: [],
+    alerts: [],
+    dashboardStats: null,
+  };
 
   // Event listeners
   private listeners: Map<string, Set<(data: unknown) => void>> = new Map();
 
-  connect() {
+  async connect() {
     if (this.socket?.connected) {
       console.log('🔌 WebSocket already connected');
       return;
     }
 
-    console.log('🔌 Connecting to WebSocket server...');
+    console.log('🔌 Attempting WebSocket connection...');
 
     const wsUrl = import.meta.env.VITE_WS_URL || 'http://localhost:3000';
     this.socket = io(wsUrl, {
       transports: ['websocket', 'polling'],
-      timeout: 20000,
+      timeout: 10000,
       reconnection: true,
       reconnectionAttempts: this.maxReconnectAttempts,
       reconnectionDelay: this.reconnectDelay,
@@ -92,6 +103,13 @@ class WebSocketService {
       console.log('✅ WebSocket connected:', this.socket?.id);
       this.isConnected = true;
       this.reconnectAttempts = 0;
+      this.usePolling = false;
+
+      // Stop polling if it was running
+      if (this.pollingInterval) {
+        clearInterval(this.pollingInterval);
+        this.pollingInterval = null;
+      }
 
       // Subscribe to real-time updates
       this.socket?.emit('subscribe:alerts');
@@ -109,7 +127,9 @@ class WebSocketService {
       this.reconnectAttempts++;
 
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-        console.error('🔌 Max reconnection attempts reached');
+        console.log('🔄 Switching to polling mode for real-time updates');
+        this.usePolling = true;
+        this.startPolling();
       }
     });
 
@@ -130,9 +150,77 @@ class WebSocketService {
       this.emit('dashboard:stats', event);
     });
 
-    this.socket.on('connected', (data: { message: string }) => {
-      console.log('🎉 Connected to fraud detection system:', data.message);
+    this.socket.on('connected', (_data: { message: string }) => {
+      console.log('🎉 Connected to fraud detection system');
     });
+  }
+
+  private async startPolling() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+    }
+
+    console.log('🔄 Starting polling for real-time updates...');
+    
+    // Initial data fetch
+    await this.pollForUpdates();
+
+    // Set up polling interval (every 5 seconds)
+    this.pollingInterval = setInterval(async () => {
+      await this.pollForUpdates();
+    }, 5000);
+  }
+
+  private async pollForUpdates() {
+    try {
+      const apiService = (await import('./api')).default;
+      
+      // Fetch latest data
+      const [transactions, alerts, dashboardStats] = await Promise.all([
+        apiService.getTransactions(100, true),
+        apiService.getAlerts(50, true),
+        apiService.getDashboardStats(),
+      ]);
+
+      // Check for new transactions
+      if (transactions.length > this.lastData.transactions.length) {
+        const newTransactions = transactions.slice(this.lastData.transactions.length);
+        newTransactions.forEach(transaction => {
+          this.emit('transaction:new', {
+            type: 'transaction:new',
+            data: transaction,
+            timestamp: new Date().toISOString(),
+          });
+        });
+      }
+
+      // Check for new alerts
+      if (alerts.length > this.lastData.alerts.length) {
+        const newAlerts = alerts.slice(this.lastData.alerts.length);
+        newAlerts.forEach(alert => {
+          this.emit('alert:new', {
+            type: 'alert:new',
+            data: alert,
+            timestamp: new Date().toISOString(),
+          });
+        });
+      }
+
+      // Update dashboard stats
+      if (!this.lastData.dashboardStats || 
+          JSON.stringify(dashboardStats) !== JSON.stringify(this.lastData.dashboardStats)) {
+        this.emit('dashboard:stats', {
+          type: 'dashboard:stats',
+          data: dashboardStats,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      // Update last data
+      this.lastData = { transactions, alerts, dashboardStats };
+    } catch (error) {
+      console.error('🔄 Polling error:', error);
+    }
   }
 
   disconnect() {
@@ -141,6 +229,12 @@ class WebSocketService {
       this.socket.disconnect();
       this.socket = null;
       this.isConnected = false;
+    }
+
+    // Stop polling if it's running
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
     }
   }
 

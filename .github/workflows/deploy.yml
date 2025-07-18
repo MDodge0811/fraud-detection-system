@@ -1,4 +1,4 @@
-name: Deploy to Vercel
+name: Deploy Frontend to Vercel
 
 on:
   push:
@@ -17,7 +17,6 @@ on:
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID_FRONTEND: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
-  VERCEL_PROJECT_ID_BACKEND: ${{ secrets.VERCEL_PROJECT_ID_BACKEND }}
 
 jobs:
   deploy-frontend:
@@ -25,8 +24,6 @@ jobs:
     name: Deploy Frontend
     environment: Production
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch'
-    outputs:
-      url: ${{ steps.deploy.outputs.preview-url }}
     
     steps:
       - name: Checkout code
@@ -71,68 +68,6 @@ jobs:
               body: `🚀 Frontend deployed to: ${{ steps.deploy.outputs.url || 'Deployed successfully' }}`
             })
 
-  deploy-backend:
-    runs-on: ubuntu-latest
-    name: Deploy Backend
-    environment: Production
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch'
-    outputs:
-      url: ${{ steps.deploy.outputs.preview-url }}
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-
-      - name: Install dependencies
-        run: |
-          cd backend
-          npm ci
-
-      - name: Generate Prisma client
-        run: |
-          cd backend
-          npx prisma generate
-
-      - name: Build application
-        run: |
-          cd backend
-          npm run build
-
-      - name: Deploy to Vercel
-        id: deploy
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_BACKEND }}
-          working-directory: ./backend
-          vercel-args: ${{ github.ref == 'refs/heads/main' && '--prod' || '' }}
-
-      - name: Run database migrations
-        if: github.ref == 'refs/heads/main'
-        run: |
-          cd backend
-          npx prisma db push --accept-data-loss
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-
-      - name: Comment deployment URL
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `🚀 Backend deployed to: ${{ steps.deploy.outputs.url || 'Deployed successfully' }}`
-            })
 
  

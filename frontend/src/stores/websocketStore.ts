@@ -18,7 +18,7 @@ interface WebSocketState {
   };
 
   // Actions
-  connect: () => void;
+  connect: () => Promise<void>;
   disconnect: () => void;
   subscribeToEvents: () => void;
   unsubscribeFromEvents: () => void;
@@ -32,8 +32,8 @@ export const useWebSocketStore = create<WebSocketState>()(
       reconnectAttempts: 0,
 
       // Connection actions
-      connect: () => {
-        websocketService.connect();
+      connect: async () => {
+        await websocketService.connect();
 
         // Set up connection status monitoring
         const checkConnection = () => {

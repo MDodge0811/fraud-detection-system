@@ -23,6 +23,8 @@ export function createApp(): express.Application {
       'https://fraud-detection-system-8ed68q2cf-mdodge0811s-projects.vercel.app',
       'https://fraud-detection-system.vercel.app',
       /^https:\/\/fraud-detection-system.*\.vercel\.app$/,
+      'https://fraud-detection-system-production.up.railway.app',
+      /^https:\/\/.*\.railway\.app$/,
     ],
     credentials: true,
   }));
@@ -67,6 +69,8 @@ export function createSocketServer(httpServer: any): Server {
         'https://fraud-detection-system-8ed68q2cf-mdodge0811s-projects.vercel.app',
         'https://fraud-detection-system.vercel.app',
         /^https:\/\/fraud-detection-system.*\.vercel\.app$/,
+        'https://fraud-detection-system-production.up.railway.app',
+        /^https:\/\/.*\.railway\.app$/,
       ],
       methods: ['GET', 'POST'],
       credentials: true,

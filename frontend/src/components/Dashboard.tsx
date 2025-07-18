@@ -44,14 +44,18 @@ const Dashboard: React.FC = () => {
 
   // Initialize dashboard
   useEffect(() => {
-    // Fetch initial data
-    fetchDashboardData();
+    const initializeDashboard = async () => {
+      // Fetch initial data
+      fetchDashboardData();
 
-    // Connect to WebSocket
-    connect();
+      // Connect to WebSocket (will fallback to polling if WebSocket fails)
+      await connect();
 
-    // Subscribe to real-time events
-    subscribeToEvents();
+      // Subscribe to real-time events
+      subscribeToEvents();
+    };
+
+    initializeDashboard();
 
     // Cleanup on unmount
     return () => {

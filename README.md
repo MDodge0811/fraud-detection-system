@@ -184,49 +184,62 @@ npm run docker:down    # Stop test database
 
 ## 🚀 Deployment & CI/CD
 
-This project is configured for fully automated deployments using **GitHub Actions** and **Vercel**.
+This project uses a hybrid deployment approach for optimal performance:
+
+### 🎯 Deployment Architecture
+
+#### Frontend (Vercel)
+- **Platform**: Vercel
+- **Deployment**: Automated via GitHub Actions
+- **Benefits**: Fast static hosting, global CDN, automatic previews
+
+#### Backend (Railway)
+- **Platform**: Railway
+- **Deployment**: Automated from GitHub
+- **Benefits**: Full WebSocket support, PostgreSQL database, real-time logs
+- **URL**: `https://fraud-detection-system-production.up.railway.app`
+
+#### Database (Railway PostgreSQL)
+- **Platform**: Railway PostgreSQL
+- **Benefits**: Managed database with automatic backups
 
 ### 🔄 CI/CD Pipeline
 
 #### Automated Workflows
-- **CI/CD**: Testing, linting, and quality checks on every push
+- **Frontend CI/CD**: Testing, linting, and deployment to Vercel
 - **Preview Deployments**: Automatic preview URLs for pull requests
-- **Production Deployments**: Automatic deployment to production on main branch
-- **Database Management**: Safe database operations via GitHub Actions
+- **Production Deployments**: Automatic deployment on main branch
 
 #### Quick Setup
 1. **Fork this repository** to your GitHub account
-2. **Set up GitHub Secrets** (see [GITHUB_ACTIONS.md](./GITHUB_ACTIONS.md))
-3. **Connect to Vercel** and import the repository
+2. **Deploy backend to Railway** (see [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md))
+3. **Set up Vercel frontend** with environment variables
 4. **Deploy automatically** on every push to main branch
 
-#### Manual Deployment
-```bash
-# Frontend
-cd frontend
-vercel --prod
+#### Environment Variables
 
-# Backend
-cd backend
-vercel --prod
+**Frontend (Vercel):**
+```bash
+VITE_API_URL=https://fraud-detection-system-production.up.railway.app/api
+VITE_WS_URL=https://fraud-detection-system-production.up.railway.app
 ```
 
-#### Environment Variables
-- `DATABASE_URL`: PostgreSQL connection string
-- `VITE_API_URL`: Backend API URL for frontend
-- `VITE_WS_URL`: WebSocket URL for frontend
+**Backend (Railway):**
+```bash
+DATABASE_URL=your_railway_postgres_url
+NODE_ENV=production
+```
 
-### 📋 Required GitHub Secrets
+### 📋 Required GitHub Secrets (Frontend Only)
 ```bash
 VERCEL_TOKEN=your_vercel_token
 VERCEL_ORG_ID=your_org_id
 VERCEL_PROJECT_ID_FRONTEND=your_frontend_project_id
-VERCEL_PROJECT_ID_BACKEND=your_backend_project_id
-DATABASE_URL=your_database_url
 ```
 
 For detailed setup instructions, see:
-- [GITHUB_ACTIONS.md](./GITHUB_ACTIONS.md) - Complete CI/CD documentation
+- [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md) - Backend deployment guide
+- [GITHUB_ACTIONS.md](./GITHUB_ACTIONS.md) - CI/CD documentation
 - [DEPLOYMENT.md](./DEPLOYMENT.md) - Vercel deployment guide
 
 ### Traditional Deployment
