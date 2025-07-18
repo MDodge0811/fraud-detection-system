@@ -120,6 +120,8 @@ jobs:
         run: |
           cd backend
           npx prisma db push --accept-data-loss
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Comment deployment URL
         if: github.event_name == 'pull_request'
