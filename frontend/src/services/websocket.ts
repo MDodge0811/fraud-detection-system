@@ -8,9 +8,9 @@ export interface RealtimeEvent {
 
 export interface DashboardStats {
   totalAlerts: number;
-  openAlerts: number;
   totalTransactions: number;
   highRiskTransactions: number;
+  averageAmount: number;
   alertResolutionRate: string;
 }
 
@@ -68,7 +68,7 @@ class WebSocketService {
   private maxReconnectAttempts = 3;
   private reconnectDelay = 1000;
   private pollingInterval: NodeJS.Timeout | null = null;
-  private usePolling = false;
+  // private usePolling = false; // Removed unused variable
   private lastData: {
     transactions: Transaction[];
     alerts: Alert[];
@@ -103,7 +103,6 @@ class WebSocketService {
       console.log('✅ WebSocket connected:', this.socket?.id);
       this.isConnected = true;
       this.reconnectAttempts = 0;
-      this.usePolling = false;
 
       // Stop polling if it was running
       if (this.pollingInterval) {
@@ -128,7 +127,6 @@ class WebSocketService {
 
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
         console.log('🔄 Switching to polling mode for real-time updates');
-        this.usePolling = true;
         this.startPolling();
       }
     });
