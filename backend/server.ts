@@ -2,8 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import routes from '@/routes';
-import { setupWebSocketHandlers } from '@/websocket';
+import routes from './routes';
+import { setupWebSocketHandlers } from './websocket';
 
 // Extend global type for simulation interval and WebSocket server
 declare global {
@@ -25,7 +25,7 @@ export function createApp(): express.Application {
   app.use('/api', routes);
 
   // Error handling middleware
-  app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  app.use((err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
     console.error('Unhandled error:', err);
     res.status(500).json({
       success: false,
