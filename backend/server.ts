@@ -16,7 +16,14 @@ export function createApp(): express.Application {
 
   // Middleware
   app.use(cors({
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    origin: [
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      'https://fraud-detection-system-rose.vercel.app',
+      'https://fraud-detection-system-8ed68q2cf-mdodge0811s-projects.vercel.app',
+      'https://fraud-detection-system.vercel.app',
+      /^https:\/\/fraud-detection-system.*\.vercel\.app$/,
+    ],
     credentials: true,
   }));
   app.use(express.json());
@@ -53,7 +60,14 @@ export function createHttpServer(app: express.Application): any {
 export function createSocketServer(httpServer: any): Server {
   const io = new Server(httpServer, {
     cors: {
-      origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+      origin: [
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'https://fraud-detection-system-rose.vercel.app',
+        'https://fraud-detection-system-8ed68q2cf-mdodge0811s-projects.vercel.app',
+        'https://fraud-detection-system.vercel.app',
+        /^https:\/\/fraud-detection-system.*\.vercel\.app$/,
+      ],
       methods: ['GET', 'POST'],
       credentials: true,
     },
