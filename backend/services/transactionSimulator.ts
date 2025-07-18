@@ -15,19 +15,19 @@ function generateRandomAmount(): number {
 
 async function getRandomUser() {
   const users = await prisma.users.findMany();
-  if (users.length === 0) return null;
+  if (users.length === 0) {return null;}
   return users[Math.floor(Math.random() * users.length)];
 }
 
 async function getRandomDevice() {
   const devices = await prisma.devices.findMany();
-  if (devices.length === 0) return null;
+  if (devices.length === 0) {return null;}
   return devices[Math.floor(Math.random() * devices.length)];
 }
 
 async function getRandomMerchant() {
   const merchants = await prisma.merchants.findMany();
-  if (merchants.length === 0) return null;
+  if (merchants.length === 0) {return null;}
   return merchants[Math.floor(Math.random() * merchants.length)];
 }
 
@@ -59,20 +59,20 @@ export async function simulateTransaction() {
         device_id: device.device_id,
         merchant_id: merchant.merchant_id,
         amount: amount,
-        status: 'completed'
+        status: 'completed',
       },
       include: {
         users: true,
         merchants: true,
-        devices: true
-      }
+        devices: true,
+      },
     });
 
     // Emit new transaction event
     emitRealtimeUpdate('transaction:new', {
       type: 'transaction',
       data: transaction,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     // Analyze transaction risk using real ML-based scoring
@@ -81,7 +81,7 @@ export async function simulateTransaction() {
       user.user_id,
       device.device_id,
       merchant.merchant_id,
-      amount
+      amount,
     );
 
     // Create risk signal with real analysis
@@ -89,23 +89,23 @@ export async function simulateTransaction() {
       data: {
         transaction_id: transaction.transaction_id,
         signal_type: 'ml_risk',
-        risk_score: riskAnalysis.riskScore
+        risk_score: riskAnalysis.riskScore,
       },
       include: {
         transactions: {
           include: {
             users: true,
-            merchants: true
-          }
-        }
-      }
+            merchants: true,
+          },
+        },
+      },
     });
 
     // Emit new risk signal event
     emitRealtimeUpdate('risk-signal:new', {
       type: 'risk-signal',
       data: riskSignal,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     // Create training data record for ML model
@@ -122,40 +122,40 @@ export async function simulateTransaction() {
           normalized_device_age: riskAnalysis.features.normalizedDeviceAge || 0,
           normalized_merchant_risk: riskAnalysis.features.normalizedMerchantRisk || 0.5,
           normalized_frequency: riskAnalysis.features.normalizedFrequency || 0,
-          normalized_avg_amount: riskAnalysis.features.normalizedAvgAmount || 0
+          normalized_avg_amount: riskAnalysis.features.normalizedAvgAmount || 0,
         },
-        label: riskAnalysis.riskScore >= 75 ? 0 : 1 // 0 or 1 for legitimate
-      }
+        label: riskAnalysis.riskScore >= 75 ? 0 : 1, // 0 or 1 for legitimate
+      },
     });
 
     // Create alert if risk score is high
     if (riskAnalysis.riskScore >= 75) {
       const riskLevel = getRiskLevel(riskAnalysis.riskScore);
       const reasons = riskAnalysis.reasons.join(', ');
-      
+
       const alert = await prisma.alerts.create({
         data: {
           transaction_id: transaction.transaction_id,
           risk_score: riskAnalysis.riskScore,
           reason: `${riskLevel} risk transaction: $${amount} (${riskAnalysis.riskScore}%) - ${reasons}`,
-          status: 'open'
+          status: 'open',
         },
         include: {
           transactions: {
             include: {
               users: true,
               merchants: true,
-              devices: true
-            }
-          }
-        }
+              devices: true,
+            },
+          },
+        },
       });
 
       // Emit new alert event
       emitRealtimeUpdate('alert:new', {
         type: 'alert',
         data: alert,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
       console.log(`🚨 ${riskLevel} risk transaction: $${amount} (${riskAnalysis.riskScore}%) - ${reasons}`);
@@ -169,7 +169,7 @@ export async function simulateTransaction() {
       prisma.alerts.count(),
       prisma.alerts.count({ where: { status: 'open' } }),
       prisma.transactions.count(),
-      prisma.risk_signals.count({ where: { risk_score: { gte: 75 } } })
+      prisma.risk_signals.count({ where: { risk_score: { gte: 75 } } }),
     ]);
 
     emitRealtimeUpdate('dashboard:stats', {
@@ -179,9 +179,9 @@ export async function simulateTransaction() {
         openAlerts,
         totalTransactions,
         highRiskTransactions,
-        alertResolutionRate: totalAlerts > 0 ? ((totalAlerts - openAlerts) / totalAlerts * 100).toFixed(2) : '0'
+        alertResolutionRate: totalAlerts > 0 ? ((totalAlerts - openAlerts) / totalAlerts * 100).toFixed(2) : '0',
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
   } catch (error) {
@@ -192,10 +192,10 @@ export async function simulateTransaction() {
 // Start transaction simulation
 export function startTransactionSimulation() {
   console.log('🔄 Starting transaction simulation (every5seconds)...');
-  
+
   // Generate initial transaction
   simulateTransaction();
-  
+
   // Set up interval for continuous simulation
   return setInterval(simulateTransaction, 5000);
 }
@@ -211,6 +211,6 @@ export function getSimulationStatus() {
   return {
     isRunning: true, // This could be enhanced to track actual status
     interval: 5000,
-    description: 'Generates mock transactions every 5 seconds'
+    description: 'Generates mock transactions every 5 seconds',
   };
-} 
+}

@@ -59,4 +59,4 @@ export const GlobalStyles = createGlobalStyle`
   input, select, textarea {
     font-family: inherit;
   }
-`; 
+`;

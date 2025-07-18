@@ -25,10 +25,10 @@ export const Grid = styled.div<{ columns?: number; gap?: string }>`
   }
 `;
 
-export const Flex = styled.div<{ 
-  direction?: 'row' | 'column'; 
-  justify?: string; 
-  align?: string; 
+export const Flex = styled.div<{
+  direction?: 'row' | 'column';
+  justify?: string;
+  align?: string;
   gap?: string;
   wrap?: boolean;
 }>`
@@ -83,13 +83,13 @@ export const Button = styled.button<{
   
   &:hover:not(:disabled) {
     background-color: ${({ variant, theme }) => {
-      switch (variant) {
-        case 'secondary': return theme.colors.button.secondaryHover;
-        case 'danger': return theme.colors.button.dangerHover;
-        case 'success': return theme.colors.button.successHover;
-        default: return theme.colors.button.primaryHover;
-      }
-    }};
+    switch (variant) {
+      case 'secondary': return theme.colors.button.secondaryHover;
+      case 'danger': return theme.colors.button.dangerHover;
+      case 'success': return theme.colors.button.successHover;
+      default: return theme.colors.button.primaryHover;
+    }
+  }};
     transform: translateY(-1px);
     box-shadow: ${({ theme }) => theme.shadows.lg};
   }
@@ -118,7 +118,7 @@ export const Heading = styled.h1<{ level?: 1 | 2 | 3 | 4 | 5 | 6 }>`
   line-height: ${({ theme }) => theme.typography.lineHeights.tight};
 `;
 
-export const Text = styled.p<{ 
+export const Text = styled.p<{
   size?: 'xs' | 'sm' | 'base' | 'lg' | 'xl';
   weight?: 'normal' | 'medium' | 'semibold' | 'bold';
   color?: 'primary' | 'secondary' | 'muted';
@@ -137,7 +137,7 @@ export const Text = styled.p<{
 `;
 
 // Badge component
-export const Badge = styled.span<{ 
+export const Badge = styled.span<{
   variant?: 'success' | 'warning' | 'error' | 'info';
   size?: 'sm' | 'md' | 'lg';
 }>`
@@ -259,4 +259,4 @@ export const Select = styled.select`
     background-color: ${({ theme }) => theme.colors.background.secondary};
     color: ${({ theme }) => theme.colors.text.primary};
   }
-`; 
+`;

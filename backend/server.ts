@@ -16,8 +16,8 @@ export function createApp(): express.Application {
 
   // Middleware
   app.use(cors({
-    origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
-    credentials: true
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    credentials: true,
   }));
   app.use(express.json());
 
@@ -30,7 +30,7 @@ export function createApp(): express.Application {
     res.status(500).json({
       success: false,
       error: 'Internal server error',
-      message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+      message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong',
     });
   });
 
@@ -39,7 +39,7 @@ export function createApp(): express.Application {
     res.status(404).json({
       success: false,
       error: 'Endpoint not found',
-      message: `Route ${req.originalUrl} does not exist`
+      message: `Route ${req.originalUrl} does not exist`,
     });
   });
 
@@ -53,10 +53,10 @@ export function createHttpServer(app: express.Application): any {
 export function createSocketServer(httpServer: any): Server {
   const io = new Server(httpServer, {
     cors: {
-      origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
-      methods: ["GET", "POST"],
-      credentials: true
-    }
+      origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+      methods: ['GET', 'POST'],
+      credentials: true,
+    },
   });
 
   // Store io globally for access in other modules
@@ -66,4 +66,4 @@ export function createSocketServer(httpServer: any): Server {
   setupWebSocketHandlers(io);
 
   return io;
-} 
+}

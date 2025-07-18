@@ -129,4 +129,4 @@ const StatsCards: React.FC = () => {
   );
 };
 
-export default StatsCards; 
+export default StatsCards;

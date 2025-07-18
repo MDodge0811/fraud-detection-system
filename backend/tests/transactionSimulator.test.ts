@@ -6,9 +6,9 @@ jest.mock('../services/riskAnalyzer', () => ({
   analyzeTransactionRisk: jest.fn().mockResolvedValue({
     riskScore: 80,
     features: { normalizedAmount: 0.5 },
-    reasons: ['High-risk merchant (90%)', 'New device (0 hours old)']
+    reasons: ['High-risk merchant (90%)', 'New device (0 hours old)'],
   }),
-  getRiskLevel: jest.fn().mockReturnValue('High')
+  getRiskLevel: jest.fn().mockReturnValue('High'),
 }));
 
 describe('Transaction Simulator', () => {
@@ -17,13 +17,13 @@ describe('Transaction Simulator', () => {
 
   beforeAll(async () => {
     testUser = await prisma.users.create({
-      data: { name: 'Test User', email: 'testuser@example.com' }
+      data: { name: 'Test User', email: 'testuser@example.com' },
     });
     testDevice = await prisma.devices.create({
-      data: { user_id: testUser.user_id, fingerprint: 'test-device-123' }
+      data: { user_id: testUser.user_id, fingerprint: 'test-device-123' },
     });
     testMerchant = await prisma.merchants.create({
-      data: { name: 'Test Merchant', category: 'Test', risk_level: 90 }
+      data: { name: 'Test Merchant', category: 'Test', risk_level: 90 },
     });
     consoleSpy = jest.spyOn(console, 'log').mockImplementation();
   });
@@ -84,4 +84,4 @@ describe('Transaction Simulator', () => {
     await simulateTransaction();
     expect(await prisma.training_data.count()).toBe(initialTrainingData + 1);
   });
-}); 
+});

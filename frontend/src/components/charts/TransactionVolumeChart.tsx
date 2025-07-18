@@ -65,4 +65,4 @@ const TransactionVolumeChart: React.FC = () => {
   );
 };
 
-export default TransactionVolumeChart; 
+export default TransactionVolumeChart;

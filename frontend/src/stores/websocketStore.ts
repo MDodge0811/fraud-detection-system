@@ -9,7 +9,15 @@ interface WebSocketState {
   // Connection state
   isConnected: boolean;
   reconnectAttempts: number;
-  
+
+  // Internal state (not exposed)
+  connectionInterval?: NodeJS.Timeout;
+  eventHandlers?: {
+    handleNewTransaction: (data: unknown) => void;
+    handleNewAlert: (data: unknown) => void;
+    handleDashboardStats: (data: unknown) => void;
+  };
+
   // Actions
   connect: () => void;
   disconnect: () => void;
@@ -27,12 +35,12 @@ export const useWebSocketStore = create<WebSocketState>()(
       // Connection actions
       connect: () => {
         websocketService.connect();
-        
+
         // Set up connection status monitoring
         const checkConnection = () => {
           const connected = websocketService.connected;
           set({ isConnected: connected });
-          
+
           // Update dashboard connection status
           const dashboardStore = useDashboardStore.getState();
           if (connected) {
@@ -44,17 +52,17 @@ export const useWebSocketStore = create<WebSocketState>()(
 
         // Check connection status periodically
         const interval = setInterval(checkConnection, 1000);
-        
+
         // Store interval for cleanup
-        (get as any).connectionInterval = interval;
+        get().connectionInterval = interval;
       },
 
       disconnect: () => {
         websocketService.disconnect();
         set({ isConnected: false });
-        
+
         // Clear connection check interval
-        const interval = (get as any).connectionInterval;
+        const interval = get().connectionInterval;
         if (interval) {
           clearInterval(interval);
         }
@@ -67,7 +75,7 @@ export const useWebSocketStore = create<WebSocketState>()(
         const handleNewTransaction = (data: unknown) => {
           const event = data as RealtimeEvent;
           const transaction = event.data as Transaction;
-          
+
           // Update chart data
           dashboardStore.updateTransactionData(transaction);
         };
@@ -76,10 +84,10 @@ export const useWebSocketStore = create<WebSocketState>()(
         const handleNewAlert = (data: unknown) => {
           const event = data as RealtimeEvent;
           const alert = event.data as Alert;
-          
+
           // Add alert to store
           dashboardStore.addAlert(alert);
-          
+
           // Update chart data
           dashboardStore.updateAlertData(alert);
         };
@@ -97,7 +105,7 @@ export const useWebSocketStore = create<WebSocketState>()(
         websocketService.on('dashboard:stats', handleDashboardStats);
 
         // Store handlers for cleanup
-        (get as any).eventHandlers = {
+        get().eventHandlers = {
           handleNewTransaction,
           handleNewAlert,
           handleDashboardStats,
@@ -105,7 +113,7 @@ export const useWebSocketStore = create<WebSocketState>()(
       },
 
       unsubscribeFromEvents: () => {
-        const handlers = (get as any).eventHandlers;
+        const handlers = get().eventHandlers;
         if (handlers) {
           websocketService.off('transaction:new', handlers.handleNewTransaction);
           websocketService.off('alert:new', handlers.handleNewAlert);
@@ -115,6 +123,6 @@ export const useWebSocketStore = create<WebSocketState>()(
     }),
     {
       name: 'websocket-store',
-    }
-  )
-); 
+    },
+  ),
+);

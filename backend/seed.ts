@@ -25,63 +25,63 @@ async function seed() {
       prisma.users.create({
         data: {
           name: 'John Smith',
-          email: 'john.smith@email.com'
-        }
+          email: 'john.smith@email.com',
+        },
       }),
       prisma.users.create({
         data: {
           name: 'Sarah Johnson',
-          email: 'sarah.johnson@email.com'
-        }
+          email: 'sarah.johnson@email.com',
+        },
       }),
       prisma.users.create({
         data: {
           name: 'Michael Brown',
-          email: 'michael.brown@email.com'
-        }
+          email: 'michael.brown@email.com',
+        },
       }),
       prisma.users.create({
         data: {
           name: 'Emily Davis',
-          email: 'emily.davis@email.com'
-        }
+          email: 'emily.davis@email.com',
+        },
       }),
       prisma.users.create({
         data: {
           name: 'David Wilson',
-          email: 'david.wilson@email.com'
-        }
+          email: 'david.wilson@email.com',
+        },
       }),
       prisma.users.create({
         data: {
           name: 'Lisa Anderson',
-          email: 'lisa.anderson@email.com'
-        }
+          email: 'lisa.anderson@email.com',
+        },
       }),
       prisma.users.create({
         data: {
           name: 'Robert Taylor',
-          email: 'robert.taylor@email.com'
-        }
+          email: 'robert.taylor@email.com',
+        },
       }),
       prisma.users.create({
         data: {
           name: 'Jennifer Martinez',
-          email: 'jennifer.martinez@email.com'
-        }
+          email: 'jennifer.martinez@email.com',
+        },
       }),
       prisma.users.create({
         data: {
           name: 'Christopher Garcia',
-          email: 'christopher.garcia@email.com'
-        }
+          email: 'christopher.garcia@email.com',
+        },
       }),
       prisma.users.create({
         data: {
           name: 'Amanda Rodriguez',
-          email: 'amanda.rodriguez@email.com'
-        }
-      })
+          email: 'amanda.rodriguez@email.com',
+        },
+      }),
     ]);
 
     console.log(`👥 Created ${users.length} users`);
@@ -93,15 +93,15 @@ async function seed() {
         prisma.devices.create({
           data: {
             user_id: user.user_id,
-            fingerprint: `device_${user.user_id}_${Math.random().toString(36).substr(2, 9)}`
-          }
+            fingerprint: `device_${user.user_id}_${Math.random().toString(36).substr(2, 9)}`,
+          },
         }),
         prisma.devices.create({
           data: {
             user_id: user.user_id,
-            fingerprint: `mobile_${user.user_id}_${Math.random().toString(36).substr(2, 9)}`
-          }
-        })
+            fingerprint: `mobile_${user.user_id}_${Math.random().toString(36).substr(2, 9)}`,
+          },
+        }),
       ]);
       devices.push(...userDevices);
     }
@@ -114,72 +114,72 @@ async function seed() {
         data: {
           name: 'Amazon.com',
           category: 'E-commerce',
-          risk_level: 20
-        }
+          risk_level: 20,
+        },
       }),
       prisma.merchants.create({
         data: {
           name: 'Starbucks',
           category: 'Food & Beverage',
-          risk_level: 15
-        }
+          risk_level: 15,
+        },
       }),
       prisma.merchants.create({
         data: {
           name: 'Walmart',
           category: 'Retail',
-          risk_level: 25
-        }
+          risk_level: 25,
+        },
       }),
       prisma.merchants.create({
         data: {
           name: 'Uber',
           category: 'Transportation',
-          risk_level: 30
-        }
+          risk_level: 30,
+        },
       }),
       prisma.merchants.create({
         data: {
           name: 'Netflix',
           category: 'Entertainment',
-          risk_level: 10
-        }
+          risk_level: 10,
+        },
       }),
       prisma.merchants.create({
         data: {
           name: 'Crypto Exchange XYZ',
           category: 'Cryptocurrency',
-          risk_level: 85
-        }
+          risk_level: 85,
+        },
       }),
       prisma.merchants.create({
         data: {
           name: 'Online Casino',
           category: 'Gambling',
-          risk_level: 90
-        }
+          risk_level: 90,
+        },
       }),
       prisma.merchants.create({
         data: {
           name: 'Grocery Store',
           category: 'Food',
-          risk_level: 20
-        }
+          risk_level: 20,
+        },
       }),
       prisma.merchants.create({
         data: {
           name: 'Gas Station',
           category: 'Fuel',
-          risk_level: 35
-        }
+          risk_level: 35,
+        },
       }),
       prisma.merchants.create({
         data: {
           name: 'Suspicious Merchant',
           category: 'Unknown',
-          risk_level: 95
-        }
-      })
+          risk_level: 95,
+        },
+      }),
     ]);
 
     console.log(`🏪 Created ${merchants.length} merchants`);
@@ -199,8 +199,8 @@ async function seed() {
           device_id: device?.device_id,
           merchant_id: merchant.merchant_id,
           amount: amount,
-          status: 'completed'
-        }
+          status: 'completed',
+        },
       });
 
       // Create risk signal
@@ -208,8 +208,8 @@ async function seed() {
         data: {
           transaction_id: transaction.transaction_id,
           signal_type: 'ml_risk',
-          risk_score: riskScore
-        }
+          risk_score: riskScore,
+        },
       });
 
       // Create training data
@@ -221,10 +221,10 @@ async function seed() {
             device_age: Math.floor(Math.random() * 24),
             merchant_risk: merchant.risk_level,
             transaction_frequency: Math.floor(Math.random() * 10),
-            avg_user_amount: Math.floor(Math.random() * 500) + 50
+            avg_user_amount: Math.floor(Math.random() * 500) + 50,
           },
-          label: riskScore >= 75 ? 1 : 0
-        }
+          label: riskScore >= 75 ? 1 : 0,
+        },
       });
 
       // Create alert if high risk
@@ -234,8 +234,8 @@ async function seed() {
             transaction_id: transaction.transaction_id,
             risk_score: riskScore,
             reason: `Initial high risk transaction: $${amount} (Risk: ${riskScore}%)`,
-            status: 'open'
-          }
+            status: 'open',
+          },
         });
       }
 
@@ -266,4 +266,4 @@ if (require.main === module) {
     });
 }
 
-export { seed }; 
+export { seed };

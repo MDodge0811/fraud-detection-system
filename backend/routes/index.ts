@@ -14,7 +14,7 @@ router.get('/alerts', async (req, res) => {
   try {
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
     const allTime = req.query.allTime === 'true';
-    
+
     const alerts = await prisma.alerts.findMany({
       orderBy: { created_at: 'desc' },
       take: allTime ? undefined : limit,
@@ -23,23 +23,23 @@ router.get('/alerts', async (req, res) => {
           include: {
             users: true,
             merchants: true,
-            devices: true
-          }
-        }
-      }
+            devices: true,
+          },
+        },
+      },
     });
 
     res.json({
       success: true,
       data: alerts,
-      count: alerts.length
+      count: alerts.length,
     });
   } catch (error) {
     console.error('Error fetching alerts:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch alerts',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -49,7 +49,7 @@ router.get('/transactions', async (req, res) => {
   try {
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;
     const allTime = req.query.allTime === 'true';
-    
+
     const transactions = await prisma.transactions.findMany({
       orderBy: { timestamp: 'desc' },
       take: allTime ? undefined : limit,
@@ -58,21 +58,21 @@ router.get('/transactions', async (req, res) => {
         merchants: true,
         devices: true,
         alerts: true,
-        risk_signals: true
-      }
+        risk_signals: true,
+      },
     });
 
     res.json({
       success: true,
       data: transactions,
-      count: transactions.length
+      count: transactions.length,
     });
   } catch (error) {
     console.error('Error fetching transactions:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch transactions',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -87,23 +87,23 @@ router.get('/risk-signals', async (req, res) => {
         transactions: {
           include: {
             users: true,
-            merchants: true
-          }
-        }
-      }
+            merchants: true,
+          },
+        },
+      },
     });
 
     res.json({
       success: true,
       data: riskSignals,
-      count: riskSignals.length
+      count: riskSignals.length,
     });
   } catch (error) {
     console.error('Error fetching risk signals:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch risk signals',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -115,12 +115,12 @@ router.get('/dashboard/stats', async (req, res) => {
       totalAlerts,
       openAlerts,
       totalTransactions,
-      highRiskTransactions
+      highRiskTransactions,
     ] = await Promise.all([
       prisma.alerts.count(),
       prisma.alerts.count({ where: { status: 'open' } }),
       prisma.transactions.count(),
-      prisma.risk_signals.count({ where: { risk_score: { gte: 75 } } })
+      prisma.risk_signals.count({ where: { risk_score: { gte: 75 } } }),
     ]);
 
     res.json({
@@ -130,15 +130,15 @@ router.get('/dashboard/stats', async (req, res) => {
         openAlerts,
         totalTransactions,
         highRiskTransactions,
-        alertResolutionRate: totalAlerts > 0 ? ((totalAlerts - openAlerts) / totalAlerts * 100).toFixed(2) : '0'
-      }
+        alertResolutionRate: totalAlerts > 0 ? ((totalAlerts - openAlerts) / totalAlerts * 100).toFixed(2) : '0',
+      },
     });
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch dashboard stats',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -147,20 +147,20 @@ router.get('/dashboard/stats', async (req, res) => {
 router.get('/simulation/status', (req, res) => {
   try {
     const status = getSimulationStatus();
-    
+
     res.json({
       success: true,
       data: {
         ...status,
-        isRunning: !!global.simulationInterval
-      }
+        isRunning: !!global.simulationInterval,
+      },
     });
   } catch (error) {
     console.error('Error getting simulation status:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to get simulation status',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -169,21 +169,21 @@ router.get('/simulation/status', (req, res) => {
 router.get('/risk-analysis/:transactionId', async (req, res) => {
   try {
     const { transactionId } = req.params;
-    
+
     // Get transaction details
     const transaction = await prisma.transactions.findUnique({
       where: { transaction_id: transactionId },
       include: {
         users: true,
         merchants: true,
-        devices: true
-      }
+        devices: true,
+      },
     });
 
     if (!transaction) {
       return res.status(404).json({
         success: false,
-        error: 'Transaction not found'
+        error: 'Transaction not found',
       });
     }
 
@@ -193,24 +193,24 @@ router.get('/risk-analysis/:transactionId', async (req, res) => {
       transaction.user_id!,
       transaction.device_id!,
       transaction.merchant_id!,
-      Number(transaction.amount)
+      Number(transaction.amount),
     );
 
     res.json({
       success: true,
       data: {
         transaction,
-        riskAnalysis
-      }
+        riskAnalysis,
+      },
     });
   } catch (error) {
     console.error('Error analyzing transaction risk:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to analyze transaction risk',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
 
-export default router; 
+export default router;

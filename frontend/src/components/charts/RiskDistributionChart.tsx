@@ -46,4 +46,4 @@ const RiskDistributionChart: React.FC = () => {
   );
 };
 
-export default RiskDistributionChart; 
+export default RiskDistributionChart;

@@ -48,10 +48,10 @@ class DashboardDataService {
     transactions.forEach(transaction => {
       const timestamp = new Date(transaction.timestamp);
       const hourKey = startOfHour(timestamp).toISOString();
-      
+
       // Transaction volume
       this.transactionVolumeData[hourKey] = (this.transactionVolumeData[hourKey] || 0) + 1;
-      
+
       // Risk distribution - use calculated risk score from risk_signals
       const riskScore = transaction.risk_signals?.[0]?.risk_score || 50;
       if (riskScore >= 75) {
@@ -75,7 +75,7 @@ class DashboardDataService {
   updateTransactionData(transaction: Transaction): void {
     const timestamp = new Date(transaction.timestamp);
     const hourKey = startOfHour(timestamp).toISOString();
-    
+
     // Update transaction volume
     this.transactionVolumeData[hourKey] = (this.transactionVolumeData[hourKey] || 0) + 1;
 
@@ -133,7 +133,7 @@ class DashboardDataService {
           data: [
             this.riskDistributionData.low,
             this.riskDistributionData.medium,
-            this.riskDistributionData.high
+            this.riskDistributionData.high,
           ],
           backgroundColor: [
             'rgba(34, 197, 94, 0.8)',
@@ -186,7 +186,7 @@ class DashboardDataService {
     const [stats, alerts, transactions] = await Promise.all([
       apiService.getDashboardStats(),
       apiService.getAlerts(50, true), // Get all-time alerts for charts
-      apiService.getTransactions(100, true) // Get all-time transactions for charts
+      apiService.getTransactions(100, true), // Get all-time transactions for charts
     ]);
 
     return { stats, alerts, transactions };
@@ -197,14 +197,14 @@ class DashboardDataService {
     transactionVolumeData: HourlyData;
     alertTrendsData: HourlyData;
     riskDistributionData: RiskDistributionData;
-  } {
+    } {
     return {
       transactionVolumeData: { ...this.transactionVolumeData },
       alertTrendsData: { ...this.alertTrendsData },
-      riskDistributionData: { ...this.riskDistributionData }
+      riskDistributionData: { ...this.riskDistributionData },
     };
   }
 }
 
 export const dashboardDataService = new DashboardDataService();
-export default dashboardDataService; 
+export default dashboardDataService;

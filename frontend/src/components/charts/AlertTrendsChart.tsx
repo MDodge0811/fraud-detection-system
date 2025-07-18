@@ -66,4 +66,4 @@ const AlertTrendsChart: React.FC = () => {
   );
 };
 
-export default AlertTrendsChart; 
+export default AlertTrendsChart;

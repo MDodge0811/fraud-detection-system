@@ -106,7 +106,7 @@ ChartJS.register(
   ChartTitle,
   Tooltip,
   Legend,
-  ArcElement
+  ArcElement,
 );
 
 const Dashboard: React.FC = () => {
@@ -120,10 +120,10 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     // Fetch initial data
     fetchDashboardData();
-    
+
     // Connect to WebSocket
     connect();
-    
+
     // Subscribe to real-time events
     subscribeToEvents();
 
@@ -175,4 +175,4 @@ const Dashboard: React.FC = () => {
   );
 };
 
-export default Dashboard; 
+export default Dashboard;

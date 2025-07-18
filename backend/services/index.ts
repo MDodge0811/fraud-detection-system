@@ -1,3 +1,3 @@
 // Export all services from this directory
 export * from '@/services/transactionSimulator';
-export * from '@/services/riskAnalyzer'; 
+export * from '@/services/riskAnalyzer';

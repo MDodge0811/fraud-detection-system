@@ -97,9 +97,9 @@ const RiskBadge = styled.span<{ riskLevel: 'high' | 'medium' | 'low' }>`
   border-radius: ${({ theme }) => theme.borderRadius.full};
   background-color: ${({ riskLevel, theme }) => {
     switch (riskLevel) {
-      case 'high': return theme.colors.risk.high + '20';
-      case 'medium': return theme.colors.risk.medium + '20';
-      default: return theme.colors.risk.low + '20';
+      case 'high': return `${theme.colors.risk.high}20`;
+      case 'medium': return `${theme.colors.risk.medium}20`;
+      default: return `${theme.colors.risk.low}20`;
     }
   }};
   color: ${({ riskLevel, theme }) => {
@@ -117,12 +117,12 @@ const StatusBadge = styled.span<{ status: string }>`
   font-size: ${({ theme }) => theme.typography.fontSizes.xs};
   font-weight: ${({ theme }) => theme.typography.fontWeights.semibold};
   border-radius: ${({ theme }) => theme.borderRadius.full};
-  background-color: ${({ status, theme }) => 
-    status === 'open' ? theme.colors.status.error + '20' : theme.colors.status.success + '20'
-  };
-  color: ${({ status, theme }) => 
+  background-color: ${({ status, theme }) =>
+    status === 'open' ? `${theme.colors.status.error}20` : `${theme.colors.status.success}20`
+};
+  color: ${({ status, theme }) =>
     status === 'open' ? theme.colors.status.error : theme.colors.status.success
-  };
+};
 `;
 
 const PaginationContainer = styled.div`
@@ -190,7 +190,7 @@ const AlertsTable: React.FC = () => {
     getAlertsPageInfo,
     nextAlertsPage,
     prevAlertsPage,
-    setAlertsPage
+    setAlertsPage,
   } = useDashboardStore();
 
   const paginatedAlerts = getPaginatedAlerts();
@@ -212,7 +212,7 @@ const AlertsTable: React.FC = () => {
           </TableInfo>
         </HeaderContent>
       </TableHeader>
-      
+
       <TableWrapper>
         <StyledTable>
           <TableHead>
@@ -251,7 +251,7 @@ const AlertsTable: React.FC = () => {
           </TableBody>
         </StyledTable>
       </TableWrapper>
-      
+
       {/* Pagination Controls */}
       {totalPages > 1 && (
         <PaginationContainer>
@@ -267,7 +267,7 @@ const AlertsTable: React.FC = () => {
               >
                 Previous
               </PaginationButton>
-              
+
               {/* Page numbers */}
               <PageNumbers>
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -286,7 +286,7 @@ const AlertsTable: React.FC = () => {
                   <Ellipsis>...</Ellipsis>
                 )}
               </PageNumbers>
-              
+
               <PaginationButton
                 variant="secondary"
                 onClick={nextAlertsPage}
@@ -302,4 +302,4 @@ const AlertsTable: React.FC = () => {
   );
 };
 
-export default AlertsTable; 
+export default AlertsTable;

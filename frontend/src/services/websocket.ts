@@ -78,7 +78,7 @@ class WebSocketService {
     }
 
     console.log('🔌 Connecting to WebSocket server...');
-    
+
     this.socket = io('http://localhost:3000', {
       transports: ['websocket', 'polling'],
       timeout: 20000,
@@ -91,7 +91,7 @@ class WebSocketService {
       console.log('✅ WebSocket connected:', this.socket?.id);
       this.isConnected = true;
       this.reconnectAttempts = 0;
-      
+
       // Subscribe to real-time updates
       this.socket?.emit('subscribe:alerts');
       this.socket?.emit('subscribe:transactions');
@@ -106,7 +106,7 @@ class WebSocketService {
     this.socket.on('connect_error', (error) => {
       console.error('🔌 WebSocket connection error:', error);
       this.reconnectAttempts++;
-      
+
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
         console.error('🔌 Max reconnection attempts reached');
       }
@@ -202,4 +202,4 @@ class WebSocketService {
 }
 
 export const websocketService = new WebSocketService();
-export default websocketService; 
+export default websocketService;

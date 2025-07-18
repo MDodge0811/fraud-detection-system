@@ -8,42 +8,42 @@ import dashboardDataService from '@/services/dashboardData';
 interface DashboardState {
   // Connection state
   connectionStatus: 'connecting' | 'connected' | 'disconnected';
-  
+
   // Data state
   stats: DashboardStats | null;
   recentAlerts: Alert[];
   loading: boolean;
-  
+
   // Pagination state
   alertsPage: number;
   alertsPerPage: number;
-  
+
   // Actions
   setConnectionStatus: (status: 'connecting' | 'connected' | 'disconnected') => void;
   setStats: (stats: DashboardStats) => void;
   setRecentAlerts: (alerts: Alert[]) => void;
   addAlert: (alert: Alert) => void;
   setLoading: (loading: boolean) => void;
-  
+
   // Pagination actions
   setAlertsPage: (page: number) => void;
   nextAlertsPage: () => void;
   prevAlertsPage: () => void;
-  
+
   // Chart data actions
   initializeChartData: (transactions: Transaction[], alerts: Alert[]) => void;
   updateTransactionData: (transaction: Transaction) => void;
   updateAlertData: (alert: Alert) => void;
-  
+
   // Chart data getters
   getTransactionVolumeData: () => ChartData;
   getRiskDistributionData: () => ChartData;
   getAlertTrendsData: () => ChartData;
-  
+
   // Pagination getters
   getPaginatedAlerts: () => Alert[];
   getAlertsPageInfo: () => { currentPage: number; totalPages: number; totalAlerts: number };
-  
+
   // Data fetching
   fetchDashboardData: () => Promise<void>;
 }
@@ -56,7 +56,7 @@ export const useDashboardStore = create<DashboardState>()(
       stats: null,
       recentAlerts: [],
       loading: true,
-      
+
       // Pagination state
       alertsPage: 1,
       alertsPerPage: 10,
@@ -77,7 +77,7 @@ export const useDashboardStore = create<DashboardState>()(
 
       addAlert: (alert) => {
         set((state) => ({
-          recentAlerts: [alert, ...state.recentAlerts.slice(0, 49)]
+          recentAlerts: [alert, ...state.recentAlerts.slice(0, 49)],
         }));
       },
 
@@ -146,7 +146,7 @@ export const useDashboardStore = create<DashboardState>()(
         return {
           currentPage: state.alertsPage,
           totalPages,
-          totalAlerts
+          totalAlerts,
         };
       },
 
@@ -155,13 +155,13 @@ export const useDashboardStore = create<DashboardState>()(
         try {
           set({ loading: true });
           const { stats, alerts, transactions } = await dashboardDataService.fetchDashboardData();
-          
-          set({ 
-            stats, 
+
+          set({
+            stats,
             recentAlerts: alerts,
-            loading: false 
+            loading: false,
           });
-          
+
           // Initialize chart data
           dashboardDataService.initializeChartData(transactions, alerts);
         } catch (error) {
@@ -172,6 +172,6 @@ export const useDashboardStore = create<DashboardState>()(
     }),
     {
       name: 'dashboard-store',
-    }
-  )
-); 
+    },
+  ),
+);

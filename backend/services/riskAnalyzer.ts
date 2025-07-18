@@ -23,16 +23,16 @@ async function getTransactionFeatures(transactionId: string, userId: string, dev
   try {
     // Get merchant risk level
     const merchant = await prisma.merchants.findUnique({
-      where: { merchant_id: merchantId }
+      where: { merchant_id: merchantId },
     });
     const merchantRisk = merchant?.risk_level || 50;
 
     // Calculate device age in hours
     const device = await prisma.devices.findUnique({
-      where: { device_id: deviceId }
+      where: { device_id: deviceId },
     });
-    const deviceAge = device ? 
-      Math.floor((Date.now() - new Date(device.last_seen || Date.now()).getTime()) / (1000 * 60 * 60)) : 
+    const deviceAge = device ?
+      Math.floor((Date.now() - new Date(device.last_seen || Date.now()).getTime()) / (1000 * 60 * 60)) :
       0;
 
     // Get transaction frequency in last 5 minutes
@@ -41,9 +41,9 @@ async function getTransactionFeatures(transactionId: string, userId: string, dev
       where: {
         user_id: userId,
         timestamp: {
-          gte: fiveMinutesAgo
-        }
-      }
+          gte: fiveMinutesAgo,
+        },
+      },
     });
 
     // Get average user amount in last 24 hours
@@ -52,14 +52,14 @@ async function getTransactionFeatures(transactionId: string, userId: string, dev
       where: {
         user_id: userId,
         timestamp: {
-          gte: twentyFourHoursAgo
-        }
+          gte: twentyFourHoursAgo,
+        },
       },
-      select: { amount: true }
+      select: { amount: true },
     });
 
-    const avgUserAmount = userTransactions.length > 0 ? 
-      userTransactions.reduce((sum, tx) => sum + Number(tx.amount), 0) / userTransactions.length : 
+    const avgUserAmount = userTransactions.length > 0 ?
+      userTransactions.reduce((sum, tx) => sum + Number(tx.amount), 0) / userTransactions.length :
       0;
 
     // Normalize features
@@ -80,8 +80,8 @@ async function getTransactionFeatures(transactionId: string, userId: string, dev
         deviceAge,
         merchantRisk,
         recentTransactions,
-        avgUserAmount
-      }
+        avgUserAmount,
+      },
     };
   } catch (error) {
     console.error('Error extracting transaction features:', error);
@@ -97,8 +97,8 @@ async function getTransactionFeatures(transactionId: string, userId: string, dev
         deviceAge: 0,
         merchantRisk: 50,
         recentTransactions: 0,
-        avgUserAmount: 0
-      }
+        avgUserAmount: 0,
+      },
     };
   }
 }
@@ -111,7 +111,7 @@ function calculateRiskScore(features: any): number {
     deviceAge: 0.15,
     merchantRisk: 0.30,
     frequency: 0.20,
-    avgAmount: 0.10
+    avgAmount: 0.10,
   };
 
   // Calculate individual risk components
@@ -159,38 +159,38 @@ function calculateRiskScore(features: any): number {
 
 // Main risk analysis function
 export async function analyzeTransactionRisk(
-  transactionId: string, 
-  userId: string, 
-  deviceId: string, 
-  merchantId: string, 
-  amount: number
+  transactionId: string,
+  userId: string,
+  deviceId: string,
+  merchantId: string,
+  amount: number,
 ): Promise<{ riskScore: number; features: any; reasons: string[] }> {
   try {
     // Extract features
     const features = await getTransactionFeatures(transactionId, userId, deviceId, merchantId, amount);
-    
+
     // Calculate risk score
     const riskScore = calculateRiskScore(features);
-    
+
     // Generate risk reasons
     const reasons: string[] = [];
-    
+
     if (features.raw.merchantRisk > HIGH_RISK_MERCHANT_THRESHOLD) {
       reasons.push(`High-risk merchant (${features.raw.merchantRisk}%)`);
     }
-    
+
     if (features.raw.recentTransactions > HIGH_TRANSACTION_FREQUENCY) {
       reasons.push(`High transaction frequency (${features.raw.recentTransactions} in 5 min)`);
     }
-    
+
     if (features.raw.deviceAge < NEW_DEVICE_HOURS) {
       reasons.push(`New device (${features.raw.deviceAge} hours old)`);
     }
-    
+
     if (features.normalizedAmount > features.normalizedAvgAmount * AMOUNT_MULTIPLIER) {
-      reasons.push(`Amount significantly higher than average`);
+      reasons.push('Amount significantly higher than average');
     }
-    
+
     if (features.normalizedAmount > 0.8) {
       reasons.push(`High transaction amount ($${amount})`);
     }
@@ -198,7 +198,7 @@ export async function analyzeTransactionRisk(
     return {
       riskScore,
       features,
-      reasons
+      reasons,
     };
   } catch (error) {
     console.error('Error analyzing transaction risk:', error);
@@ -206,25 +206,25 @@ export async function analyzeTransactionRisk(
     return {
       riskScore: 50,
       features: { normalizedAmount: amount / MAX_AMOUNT },
-      reasons: ['Risk analysis failed - using default score']
+      reasons: ['Risk analysis failed - using default score'],
     };
   }
 }
 
 // Get risk level description
 export function getRiskLevel(riskScore: number): string {
-  if (riskScore >= CRITICAL_RISK) return 'Critical';
-  if (riskScore >= HIGH_RISK) return 'High';
-  if (riskScore >= MEDIUM_RISK) return 'Medium';
-  if (riskScore >= LOW_RISK) return 'Low';
+  if (riskScore >= CRITICAL_RISK) {return 'Critical';}
+  if (riskScore >= HIGH_RISK) {return 'High';}
+  if (riskScore >= MEDIUM_RISK) {return 'Medium';}
+  if (riskScore >= LOW_RISK) {return 'Low';}
   return 'Very Low';
 }
 
 // Get risk color for UI
 export function getRiskColor(riskScore: number): string {
-  if (riskScore >= CRITICAL_RISK) return '#dc2626'; // Red
-  if (riskScore >= HIGH_RISK) return '#ea580c'; // Orange
-  if (riskScore >= MEDIUM_RISK) return '#d97706'; // Amber
-  if (riskScore >= LOW_RISK) return '#65a30d'; // Green
+  if (riskScore >= CRITICAL_RISK) {return '#dc2626';} // Red
+  if (riskScore >= HIGH_RISK) {return '#ea580c';} // Orange
+  if (riskScore >= MEDIUM_RISK) {return '#d97706';} // Amber
+  if (riskScore >= LOW_RISK) {return '#65a30d';} // Green
   return '#16a34a'; // Dark green
-} 
+}

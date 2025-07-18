@@ -100,4 +100,4 @@ declare module 'styled-components' {
       slow: string;
     };
   }
-} 
+}

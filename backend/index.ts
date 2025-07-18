@@ -24,10 +24,10 @@ async function startServer() {
 
     // Create Express app
     const app = createApp();
-    
+
     // Create HTTP server
     const server = createHttpServer(app);
-    
+
     // Create Socket.IO server
     createSocketServer(server);
 
@@ -39,10 +39,10 @@ async function startServer() {
       console.log(`💳 Transactions endpoint: http://localhost:${PORT}/api/transactions`);
       console.log(`📈 Dashboard stats: http://localhost:${PORT}/api/dashboard/stats`);
       console.log(`🔌 WebSocket server ready on ws://localhost:${PORT}`);
-      
+
       // Start transaction simulation after server is running
       const simulationInterval = startTransactionSimulation();
-      
+
       // Store interval ID for graceful shutdown
       global.simulationInterval = simulationInterval;
     });
@@ -55,27 +55,27 @@ async function startServer() {
 // Graceful shutdown
 process.on('SIGINT', async () => {
   console.log('\n🛑 Shutting down server...');
-  
+
   // Stop transaction simulation
   if (global.simulationInterval) {
     stopTransactionSimulation(global.simulationInterval);
   }
-  
+
   await prisma.$disconnect();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
   console.log('\n🛑 Shutting down server...');
-  
+
   // Stop transaction simulation
   if (global.simulationInterval) {
     stopTransactionSimulation(global.simulationInterval);
   }
-  
+
   await prisma.$disconnect();
   process.exit(0);
 });
 
 // Start the server
-startServer(); 
+startServer();
