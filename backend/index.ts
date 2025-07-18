@@ -1,8 +1,8 @@
 import dotenv from 'dotenv';
 import { Server } from 'socket.io';
-import { prisma } from '@/prisma/client';
-import { createApp, createHttpServer, createSocketServer } from '@/server';
-import { startTransactionSimulation, stopTransactionSimulation } from '@/services';
+import { prisma } from './prisma/client';
+import { createApp, createHttpServer, createSocketServer } from './server';
+import { startTransactionSimulation, stopTransactionSimulation } from './services';
 
 // Extend global type for simulation interval and WebSocket server
 declare global {

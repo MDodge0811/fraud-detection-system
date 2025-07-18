@@ -1,6 +1,6 @@
 import express from 'express';
-import { prisma } from '@/prisma/client';
-import { analyzeTransactionRisk, getSimulationStatus } from '@/services';
+import { prisma } from '../prisma/client';
+import { analyzeTransactionRisk, getSimulationStatus } from '../services';
 
 const router = express.Router();
 

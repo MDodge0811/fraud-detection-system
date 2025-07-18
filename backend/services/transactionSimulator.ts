@@ -1,5 +1,5 @@
-import { prisma } from '@/prisma/client';
-import { analyzeTransactionRisk, getRiskLevel } from '@/services/riskAnalyzer';
+import { prisma } from '../prisma/client';
+import { analyzeTransactionRisk, getRiskLevel } from './riskAnalyzer';
 import { Server } from 'socket.io';
 
 // Extend global type for WebSocket server

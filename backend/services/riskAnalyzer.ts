@@ -1,4 +1,4 @@
-import { prisma } from '@/prisma/client';
+import { prisma } from '../prisma/client';
 
 // Constants for risk analysis
 const MAX_AMOUNT = 10000; // Maximum transaction amount for normalization

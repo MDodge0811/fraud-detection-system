@@ -3,8 +3,9 @@
   "builds": [
     {
       "src": "index.ts",
-      "use": "@vercel/node",
+      "use": "@vercel/node@4.0.0",
       "config": {
+        "nodeVersion": "22.x",
         "includeFiles": ["prisma/**/*"]
       }
     }
@@ -15,14 +16,7 @@
       "dest": "/index.ts"
     }
   ],
-  "functions": {
-    "index.ts": {
-      "runtime": "nodejs18.x",
-      "maxDuration": 30
-    }
-  },
   "env": {
-    "DATABASE_URL": "@database_url",
     "NODE_ENV": "production"
   }
 } 
