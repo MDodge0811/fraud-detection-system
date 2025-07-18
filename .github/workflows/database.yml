@@ -58,7 +58,7 @@ jobs:
           cd backend
           npx prisma db push
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ github.event.inputs.environment == 'production' && secrets.DATABASE_URL || secrets.TEST_DATABASE_URL }}
 
       - name: Seed database
         if: github.event.inputs.action == 'seed'
@@ -66,7 +66,7 @@ jobs:
           cd backend
           npm run seed
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ github.event.inputs.environment == 'production' && secrets.DATABASE_URL || secrets.TEST_DATABASE_URL }}
 
       - name: Reset database
         if: github.event.inputs.action == 'reset'
@@ -75,7 +75,7 @@ jobs:
           npx prisma db push --force-reset
           npm run seed
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ github.event.inputs.environment == 'production' && secrets.DATABASE_URL || secrets.TEST_DATABASE_URL }}
 
       - name: Create database backup
         if: github.event.inputs.action == 'backup'
@@ -83,7 +83,7 @@ jobs:
           cd backend
           npx prisma db pull --print > backup_$(date +%Y%m%d_%H%M%S).prisma
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ github.event.inputs.environment == 'production' && secrets.DATABASE_URL || secrets.TEST_DATABASE_URL }}
 
       - name: Upload backup file
         if: github.event.inputs.action == 'backup'

@@ -8,16 +8,16 @@ set -e
 echo "🚀 Setting up Vercel deployment for Fraud Detection System"
 echo "=========================================================="
 
-# Check if Vercel CLI is installed
-if ! command -v vercel &> /dev/null; then
-    echo "❌ Vercel CLI is not installed. Installing..."
-    npm install -g vercel
+# Check if Vercel CLI is available
+if ! npx vercel --version &> /dev/null; then
+    echo "❌ Vercel CLI is not available. Installing..."
+    npm install vercel
 fi
 
 # Check if user is logged in
-if ! vercel whoami &> /dev/null; then
+if ! npx vercel whoami &> /dev/null; then
     echo "🔐 Please log in to Vercel..."
-    vercel login
+    npx vercel login
 fi
 
 echo ""
@@ -26,11 +26,11 @@ echo "=================================="
 
 # Get organization ID
 echo "🏢 Organization ID:"
-vercel orgs ls
+npx vercel orgs ls
 
 echo ""
 echo "📁 Project IDs:"
-vercel projects ls
+npx vercel projects ls
 
 echo ""
 echo "🔑 To get your Vercel token:"
