@@ -163,8 +163,7 @@ export const useDashboardStore = create<DashboardState>()(
 
           // Initialize chart data
           dashboardDataService.initializeChartData(transactions, alerts);
-        } catch (error) {
-          console.error('Error fetching dashboard data:', error);
+        } catch {
           set({ loading: false });
         }
       },

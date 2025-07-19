@@ -32,7 +32,7 @@ global.WebSocket = class MockWebSocket {
     setTimeout(() => this.onopen?.(new Event('open')), 0);
   }
 
-  send(_data: string) {
+  send() {
     // Mock send
   }
 
@@ -53,4 +53,4 @@ global.console = {
   info: vi.fn(),
   warn: vi.fn(),
   error: vi.fn(),
-}; 
+};

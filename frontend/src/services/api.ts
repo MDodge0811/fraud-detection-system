@@ -57,7 +57,9 @@ class ApiService {
 
   // Dashboard endpoints
   async getDashboardStats(): Promise<DashboardStats> {
-    const response = await this.request<{ success: boolean; data: DashboardStats }>('/dashboard/stats');
+    const response = await this.request<{ success: boolean; data: DashboardStats }>(
+      '/dashboard/stats',
+    );
     return response.data;
   }
 
@@ -66,12 +68,16 @@ class ApiService {
     const params = new URLSearchParams();
     if (limit !== 100) params.append('limit', limit.toString());
     if (allTime) params.append('allTime', 'true');
-    const response = await this.request<{ success: boolean; data: Transaction[]; count: number }>(`/transactions?${params.toString()}`);
+    const response = await this.request<{ success: boolean; data: Transaction[]; count: number }>(
+      `/transactions?${params.toString()}`,
+    );
     return response.data;
   }
 
   async getTransactionById(id: string): Promise<Transaction> {
-    const response = await this.request<{ success: boolean; data: Transaction }>(`/transactions/${id}`);
+    const response = await this.request<{ success: boolean; data: Transaction }>(
+      `/transactions/${id}`,
+    );
     return response.data;
   }
 
@@ -80,7 +86,9 @@ class ApiService {
     const params = new URLSearchParams();
     if (limit !== 50) params.append('limit', limit.toString());
     if (allTime) params.append('allTime', 'true');
-    const response = await this.request<{ success: boolean; data: Alert[]; count: number }>(`/alerts?${params.toString()}`);
+    const response = await this.request<{ success: boolean; data: Alert[]; count: number }>(
+      `/alerts?${params.toString()}`,
+    );
     return response.data;
   }
 

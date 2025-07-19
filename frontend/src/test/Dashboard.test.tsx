@@ -52,12 +52,12 @@ vi.mock('@/stores', () => ({
       getAlertsPageInfo: vi.fn(() => ({ currentPage: 1, totalPages: 1, totalAlerts: 0 })),
       fetchDashboardData: vi.fn(),
     };
-    
+
     // If selector is provided, call it with the state
     if (typeof selector === 'function') {
       return selector(state);
     }
-    
+
     // Otherwise return the state object
     return state;
   }),
@@ -89,7 +89,7 @@ describe('Dashboard', () => {
 
   it('renders all dashboard components', () => {
     render(<Dashboard />, { wrapper: TestWrapper });
-    
+
     expect(screen.getByTestId('stats-cards')).toBeInTheDocument();
     expect(screen.getByTestId('connection-status')).toBeInTheDocument();
     expect(screen.getByTestId('alerts-table')).toBeInTheDocument();
@@ -97,4 +97,4 @@ describe('Dashboard', () => {
     expect(screen.getByTestId('risk-distribution-chart')).toBeInTheDocument();
     expect(screen.getByTestId('alert-trends-chart')).toBeInTheDocument();
   });
-}); 
+});

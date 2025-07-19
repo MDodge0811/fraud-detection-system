@@ -12,9 +12,9 @@ interface WebSocketState {
   // Internal state (not exposed)
   connectionInterval?: NodeJS.Timeout;
   eventHandlers?: {
-    handleNewTransaction: (_data: unknown) => void;
-    handleNewAlert: (_data: unknown) => void;
-    handleDashboardStats: (_data: unknown) => void;
+    handleNewTransaction: (data: unknown) => void;
+    handleNewAlert: (data: unknown) => void;
+    handleDashboardStats: (data: unknown) => void;
   };
 
   // Actions

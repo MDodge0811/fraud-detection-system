@@ -68,7 +68,6 @@ class WebSocketService {
   private maxReconnectAttempts = 3;
   private reconnectDelay = 1000;
   private pollingInterval: NodeJS.Timeout | null = null;
-  // private usePolling = false; // Removed unused variable
   private lastData: {
     transactions: Transaction[];
     alerts: Alert[];
@@ -84,11 +83,8 @@ class WebSocketService {
 
   async connect() {
     if (this.socket?.connected) {
-      console.log('🔌 WebSocket already connected');
       return;
     }
-
-    console.log('🔌 Attempting WebSocket connection...');
 
     const wsUrl = import.meta.env.VITE_WS_URL || 'http://localhost:3000';
     this.socket = io(wsUrl, {
@@ -100,7 +96,6 @@ class WebSocketService {
     });
 
     this.socket.on('connect', () => {
-      console.log('✅ WebSocket connected:', this.socket?.id);
       this.isConnected = true;
       this.reconnectAttempts = 0;
 
@@ -116,17 +111,14 @@ class WebSocketService {
       this.socket?.emit('subscribe:dashboard');
     });
 
-    this.socket.on('disconnect', (reason) => {
-      console.log('❌ WebSocket disconnected:', reason);
+    this.socket.on('disconnect', () => {
       this.isConnected = false;
     });
 
-    this.socket.on('connect_error', (error) => {
-      console.error('🔌 WebSocket connection error:', error);
+    this.socket.on('connect_error', () => {
       this.reconnectAttempts++;
 
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-        console.log('🔄 Switching to polling mode for real-time updates');
         this.startPolling();
       }
     });
@@ -148,8 +140,8 @@ class WebSocketService {
       this.emit('dashboard:stats', event);
     });
 
-    this.socket.on('connected', (_data: { message: string }) => {
-      console.log('🎉 Connected to fraud detection system');
+    this.socket.on('connected', () => {
+      // Connection established
     });
   }
 
@@ -158,8 +150,6 @@ class WebSocketService {
       clearInterval(this.pollingInterval);
     }
 
-    console.log('🔄 Starting polling for real-time updates...');
-    
     // Initial data fetch
     await this.pollForUpdates();
 
@@ -172,7 +162,7 @@ class WebSocketService {
   private async pollForUpdates() {
     try {
       const apiService = (await import('./api')).default;
-      
+
       // Fetch latest data
       const [transactions, alerts, dashboardStats] = await Promise.all([
         apiService.getTransactions(100, true),
@@ -205,7 +195,7 @@ class WebSocketService {
       }
 
       // Update dashboard stats
-      if (!this.lastData.dashboardStats || 
+      if (!this.lastData.dashboardStats ||
           JSON.stringify(dashboardStats) !== JSON.stringify(this.lastData.dashboardStats)) {
         this.emit('dashboard:stats', {
           type: 'dashboard:stats',
@@ -216,14 +206,13 @@ class WebSocketService {
 
       // Update last data
       this.lastData = { transactions, alerts, dashboardStats };
-    } catch (error) {
-      console.error('🔄 Polling error:', error);
+    } catch {
+      // Handle polling error silently in production
     }
   }
 
   disconnect() {
     if (this.socket) {
-      console.log('🔌 Disconnecting WebSocket...');
       this.socket.disconnect();
       this.socket = null;
       this.isConnected = false;
@@ -237,8 +226,7 @@ class WebSocketService {
   }
 
   // Subscribe to events
-
-  on(event: string, callback: (_data: unknown) => void) {
+  on(event: string, callback: (data: unknown) => void) {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, new Set());
     }
@@ -246,8 +234,7 @@ class WebSocketService {
   }
 
   // Unsubscribe from events
-
-  off(event: string, callback: (_data: unknown) => void) {
+  off(event: string, callback: (data: unknown) => void) {
     this.listeners.get(event)?.delete(callback);
   }
 
@@ -258,8 +245,8 @@ class WebSocketService {
       eventListeners.forEach(callback => {
         try {
           callback(data);
-        } catch (error) {
-          console.error(`Error in event listener for ${event}:`, error);
+        } catch {
+          // Handle callback errors silently in production
         }
       });
     }
@@ -270,7 +257,7 @@ class WebSocketService {
     return this.isConnected;
   }
 
-  // Manual subscription methods
+  // Subscribe to specific events
   subscribeToAlerts() {
     this.socket?.emit('subscribe:alerts');
   }
@@ -296,5 +283,4 @@ class WebSocketService {
   }
 }
 
-export const websocketService = new WebSocketService();
-export default websocketService;
+export default new WebSocketService();
