@@ -38,9 +38,9 @@ export const RiskConfig = {
   // Risk colors for UI
   COLORS: {
     critical: '#dc2626', // Red
-    high: '#ea580c',    // Orange
-    medium: '#d97706',   // Amber
-    low: '#65a30d',     // Green
-    veryLow: '#16a34a',  // Dark green
+    high: '#ea580c', // Orange
+    medium: '#d97706', // Amber
+    low: '#65a30d', // Green
+    veryLow: '#16a34a', // Dark green
   },
 } as const;

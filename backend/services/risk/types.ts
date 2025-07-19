@@ -45,4 +45,3 @@ export interface Transaction {
   amount: string;
   timestamp: Date;
 }
-
