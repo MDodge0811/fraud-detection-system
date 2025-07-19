@@ -1,36 +1,77 @@
----
-alwaysApply: true
----
+# Current ML Implementation: Simple Weighted Risk Model
 
-- Library: ml.js (logistic regression for binary classification: fraud/non-fraud).
-- Features (extract via SQL queries):
-  - Normalized amount (amount / 10000).
-  - Device age (hours: (NOW() - Devices.last_seen) / 3600).
-  - Merchant risk_level (0-100).
-  - Transaction frequency (COUNT(Transactions) in last 5 min per user).
-  - Average user amount (AVG(amount) in last 24 hours).
-- Training:
-  - Query Training_Data for features (JSONB) and labels.
-  - Use 80/20 split: Train on 800 samples, validate on 200.
-  - Code example:
+## Overview
+The system uses a custom simple weighted risk model instead of external ML libraries for reliability and simplicity. This is complemented by a basic rule-based analyzer for comparison.
+
+## Dual Risk Analyzer System
+- **ML Risk Analyzer**: Custom simple weighted risk model
+- **Basic Risk Analyzer**: Rule-based analyzer for comparison
+- **Side-by-side logging**: Both analyzers provide risk scores and reasoning
+
+## ML Risk Analyzer Features
+- **Feature Extraction**: 
+  - Normalized amount (amount / 10000)
+  - Device age (hours: (NOW() - Devices.last_seen) / 3600)
+  - Merchant risk_level (0-100)
+  - Transaction frequency (COUNT(Transactions) in last 5 min per user)
+  - Average user amount (AVG(amount) in last 24 hours)
+  - User account age (days since user creation)
+
+- **Risk Scoring Algorithm**:
+  ```typescript
+  // Simple weighted risk model
+  const riskScore = (
+    (normalizedAmount * 0.3) +
+    (deviceAgeRisk * 0.2) +
+    (merchantRisk * 0.25) +
+    (frequencyRisk * 0.15) +
+    (averageAmountRisk * 0.1)
+  ) * 100;
+  ```
+
+## Training Data
+- **Source**: 11,500+ transactions with fraud patterns
+- **Storage**: Training_Data table with JSONB features
+- **Model Persistence**: ML_Models table for model data storage
+- **Retraining**: Automatic retraining on startup if no model exists
+
+## Real-Time Scoring
+- **Feature Extraction**: SQL queries for real-time feature calculation
+- **Risk Assessment**: Weighted scoring with configurable thresholds
+- **Alert Generation**: High-risk transactions (>75%) trigger alerts
+- **WebSocket Updates**: Real-time dashboard updates
+
+## Basic Risk Analyzer (Comparison)
+- **Rule-based scoring**: Simple rules for risk assessment
+- **Feature analysis**: Amount, merchant risk, device age, frequency
+- **Risk levels**: Low (0-30%), Medium (31-70%), High (71-100%)
+- **Reasoning**: Detailed explanations for risk scores
+
+## Code Patterns
+```typescript
+// ML Risk Analyzer
+const mlRisk = await analyzeTransactionRiskML(transaction);
+// Basic Risk Analyzer  
+const basicRisk = await analyzeTransactionRisk(transaction);
+
+// Side-by-side logging
+console.log(`ML Risk: ${mlRisk.score}% (${mlRisk.level})`);
+console.log(`Basic Risk: ${basicRisk.score}% (${basicRisk.level})`);
+console.log(`ML Reasons: ${mlRisk.reasons.join(', ')}`);
+console.log(`Basic Reasons: ${basicRisk.reasons.join(', ')}`);
 ```
-import * as ML from 'ml';
-const { LogisticRegression } = ML.Classification;
 
-// Load data from DB (features: number[][], labels: number[])
-const features: number[][] = []; // e.g., [[0.6, 2, 0.8, 3, 0.5], ...]
-const labels: number[] = []; // [0, 1, 0, ...]
+## Database Integration
+- **Prisma ORM**: Type-safe database queries
+- **Model Storage**: JSONB storage for model parameters
+- **Training Data**: Comprehensive dataset with fraud patterns
+- **Performance**: Indexed queries for real-time feature extraction
 
-const model = new LogisticRegression();
-model.train(features, labels);
-
-// Predict (for new tx features)
-const prediction: number = model.predict([newFeatures]); // Probability (scale to 0-100)
-```
-
-- Real-Time Scoring:
-  - On new transaction, extract features with queries like:
-  - sql `SELECT AVG(amount) FROM Transactions WHERE user_id = $1 AND timestamp > NOW() - INTERVAL '24 hours';`
+## Production Considerations
+- **Railway Deployment**: Production database with seeding scripts
+- **Prisma Client Reset**: Automatic reset on startup to clear cached plans
+- **Error Handling**: Fallback mechanisms for numerical issues
+- **Monitoring**: Comprehensive logging for both analyzers
   - Normalize, predict, insert to Risk_Signals if >75, trigger Alert.
   
 Evaluation: Compute accuracy on validation set; aim for >80%. Retrain periodically (comment for production).

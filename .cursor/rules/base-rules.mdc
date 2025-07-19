@@ -1,51 +1,63 @@
----
-alwaysApply: true
----
 
 Cursor Context File: Real-Time Fraud Detection Alert System with ML-Based Risk Scoring
-This context file provides a comprehensive overview and guidance for building the Real-Time Fraud Detection Alert System with ML-Based Risk Scoring in Cursor. Use this as a reference when coding, asking Cursor for help on specific components, or generating code snippets. It focuses on fraud detection using a complex PostgreSQL schema, Node.js backend, React frontend, and ML for risk scoring. This version incorporates TypeScript for type safety across backend and frontend, and uses the latest TanStack Table (@tanstack/react-table v8) for the interactive alerts table.
+This context file provides a comprehensive overview and guidance for building the Real-Time Fraud Detection Alert System with ML-Based Risk Scoring in Cursor. Use this as a reference when coding, asking Cursor for help on specific components, or generating code snippets. It focuses on fraud detection using a complex PostgreSQL schema, Node.js backend, React frontend, and dual risk analyzers (ML + Basic). This version incorporates TypeScript for type safety across backend and frontend, Docker containerization, and Railway deployment.
 
 Focus on fintech priorities: reliability, security, compliance, and scalability. Emphasize clean code, error handling, types, and comments.
 
 # Project Overview
 # Why This Project?
 ## Goal: 
-Build a real-time system that simulates financial transactions, uses ML to score fraud risk, generates alerts, and provides an interactive dashboard.
+Build a real-time system that simulates financial transactions, uses dual risk analyzers (ML + Basic) to score fraud risk, generates alerts, and provides an interactive dashboard with WebSocket real-time updates.
 
 ## Key Features:
 - Mock transaction generation (e.g., payments with varying amounts, users, devices).
-- ML-based risk scoring using logistic regression on features like amount, device age, merchant risk.
-- Real-time alerts for high-risk transactions.
+- Dual risk scoring: ML-based risk model + Basic rule-based analyzer for comparison.
+- Real-time alerts for high-risk transactions via WebSocket.
 - Interactive dashboard with filters, historical charts, and alert resolution (using TanStack Table for sortable/filterable tables).
 - Compliance reporting (PDF exports of audit logs).
+- Docker containerization for consistent deployment.
+- Railway deployment for production hosting.
 - Business Impact: Reduces fraud losses, ensures compliance (e.g., audit trails), and demonstrates innovation in fintech.
 - Timeframe: 15-20 hours (10-hour base + 5-10 hours for ML and enhancements).
-- Deliverables: Deployed app on Vercel, demo script, README.
+- Deliverables: Deployed app on Railway, Vercel, README.
 
 ## Assumptions
-- You have basic experience with Node.js, React, PostgreSQL, TypeScript, and ML concepts.
-- Use free tiers: Neon/Supabase for PostgreSQL, Vercel for deployment.
-- No internet access needed for ML (use mock data; ml.js is lightweight).
+- You have basic experience with Node.js, React, PostgreSQL, TypeScript, Docker, and ML concepts.
+- Use Railway for PostgreSQL and deployment, Docker for containerization.
+- No internet access needed for ML (use mock data; simple risk model is lightweight).
 - 
 ## Security: 
 - In a real fintech app, add encryption (e.g., for user data) and authentication—mention this in comments but skip for time.
   
 ## Tech Stack
-Backend: Node.js v20+ with Express.js (for API routes), TypeScript for type safety, Prisma for database ORM
-Dependencies: express, pg (PostgreSQL client), ml (for logistic regression), pdfkit (for reports), uuid (for IDs), dotenv (for env vars).
-Dev Dependencies: typescript, @types/node, @types/express, @types/pg, @types/uuid, ts-node.
+Backend: Node.js v20+ with Express.js (for API routes), TypeScript for type safety, Prisma for database ORM, Socket.IO for WebSocket
+Dependencies: @prisma/client, cors, dotenv, express, ml, ml-regression-polynomial, pdfkit, pg, prisma, socket.io, uuid
+Dev Dependencies: typescript, @types/express, @types/node, @types/pg, @types/socket.io, @types/uuid, ts-node
 Database: PostgreSQL (complex schema with 8 tables, relationships, indexes).
-Frontend: React (with Vite for setup and TypeScript), @tanstack/react-table (for interactive tables), react-chartjs-2 (charts), Tailwind CSS (styling).
-ML: ml.js for logistic regression (simple, no heavy dependencies).
-Deployment: Vercel (separate repos for backend/frontend or monorepo).
-Other Tools: GitHub for version control, Redis (optional for caching recent alerts).
+Frontend: React (with Vite for setup and TypeScript), @tanstack/react-table (for interactive tables), react-chartjs-2 (charts), styled-components, Socket.IO client, zustand (state management).
+ML: Custom simple weighted risk model (no external ML libraries).
+Deployment: Railway (backend + database), Docker containerization.
+Other Tools: GitHub for version control.
 
-Installation Command (run in project root):
+## Current Architecture
+- **Dual Risk Analyzers**: ML risk analyzer (simple weighted model) + Basic risk analyzer (rule-based)
+- **Real-time Updates**: WebSocket connections for live dashboard updates
+- **Docker Containerization**: Backend, frontend, database
+- **Prisma Client Reset**: Automatic Prisma client reset on startup to clear cached query plans
+- **Production Database**: Railway PostgreSQL with seeding scripts
+- **Transaction Simulation**: Enhanced simulator with fraud patterns and dual analyzer logging
+
+> 📁 **Project Structure**: See `.cursor/rules/project-structure.mdc` for detailed file organization and architectural patterns.
+
+## Installation Commands (run in project root):
 ### Backend
 cd backend
-npm install express pg ml pdfkit uuid dotenv
-npm install --save-dev typescript @types/node @types/express @types/pg @types/uuid ts-node
+npm install @prisma/client cors dotenv express ml ml-regression-polynomial pdfkit pg prisma socket.io uuid
+npm install --save-dev typescript @types/express @types/node @types/pg @types/socket.io @types/uuid ts-node
 
 ### Frontend
 cd frontend
-npm install react-chartjs-2 chart.js @tanstack/react-table tailwindcss postcss autoprefixer
+npm install @tanstack/react-table chart.js react-chartjs-2 date-fns react react-dom socket.io-client styled-components zustand
+
+### Docker Setup
+docker compose up -d

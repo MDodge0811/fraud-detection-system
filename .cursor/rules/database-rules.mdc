@@ -1,6 +1,6 @@
+# Database Schema and Patterns
 
-Database Schema
-The database is Postgres, using the Prisma ORM. 
+The database is PostgreSQL, using the Prisma ORM with Railway and Neon deployment.
 
 Read ./backend/prisma/schema.prisma for an up-to-date schema for the application.
 
@@ -10,10 +10,70 @@ Prisma Documentation: https://www.prisma.io/docs/orm
 - All tables use UUID primary keys for security
 - Proper foreign key relationships with cascade options
 - Indexes on timestamp fields for performance
-- JSONB for flexible feature storage in training_data
+- JSONB for flexible feature storage in training_data and ml_models
 - Check constraints for data validation (risk_level 0-100)
+- Automatic timestamps (created_at, updated_at)
+
+## Current Schema Tables:
+- **users**: User accounts with email and profile data
+- **devices**: Device information with last_seen timestamps
+- **merchants**: Merchant data with risk_level (0-100)
+- **transactions**: Financial transactions with amounts and metadata
+- **risk_signals**: Risk assessments from both analyzers
+- **alerts**: High-risk transaction alerts
+- **training_data**: ML training data with JSONB features
+- **ml_models**: Stored model parameters and metadata
 
 ## Prisma Commands:
 - `npx prisma generate` - Generate TypeScript types
 - `npx prisma db push` - Push schema changes to database
+- `npx prisma migrate dev` - Create and apply migrations
+- `npx prisma migrate deploy` - Apply migrations in production
 - `npx prisma studio` - Open database GUI
+- `npx prisma db reset` - Reset database (development only)
+
+## Production Database Setup:
+- **Railway PostgreSQL**: Production database hosting
+- **Environment Variables**: PRODUCTION_DATABASE_URL for production DB
+- **Seeding Scripts**: 
+  - `seed-production-db.ts` - Seed production database
+  - `wipe-production-db.ts` - Reset and seed production database
+- **Migration Strategy**: Use `prisma migrate deploy` for production
+
+## Prisma Client Reset Pattern:
+```typescript
+// Clear cached query plans on startup
+await prisma.$disconnect();
+await prisma.$connect();
+console.log('✅ Database connected successfully (Prisma client reset)');
+```
+
+## Seeding Data:
+- **11,500+ transactions** with fraud patterns
+- **25 users** with diverse profiles
+- **50 devices** with varying ages and risk levels
+- **20 merchants** with different risk levels (0-100%)
+- **Comprehensive fraud patterns** for ML training
+
+## Query Patterns:
+```typescript
+// Include relationships
+const users = await prisma.users.findMany({
+  include: {
+    transactions: true,
+  },
+});
+
+// Complex queries with aggregations
+const avgAmount = await prisma.transactions.aggregate({
+  where: {
+    user_id: userId,
+    timestamp: {
+      gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
+    },
+  },
+  _avg: {
+    amount: true,
+  },
+});
+```

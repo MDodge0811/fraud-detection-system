@@ -1,29 +1,216 @@
----
-alwaysApply: true
----
+# Project Structure and Organization
 
-project/
-├── backend/
-│   ├── index.ts // Express app
-│   ├── routes/transactions.ts // Endpoints
-│   ├── models/db.ts // PG connection
-│   ├── utils/mlUtils.ts // ML functions
-│   ├── seed.ts // Data seeding
-│   └── .env // DB_URL=postgres://...
-├── frontend/
-│   ├── src/
-│   │   ├── components/Dashboard.tsx // Alerts table (TanStack), chart
-│   │   ├── App.tsx // Main app
-│   │   └── tailwind.config.js
-└── README.md // Setup, demo instructions
+## Root Directory Structure
+```
+fraud-detection-system/
+├── backend/                    # Node.js/TypeScript backend API
+├── frontend/                   # React/TypeScript frontend
+├── scripts/                    # Setup and deployment scripts
+├── docker-compose.yml          # Docker container orchestration
+├── docker-compose.test.yml     # Test environment containers
+├── .cursor/                    # Cursor IDE configuration
+│   └── rules/                  # Cursor rules files
+├── README.md                   # Main project documentation
+├── DEPLOYMENT.md              # Deployment instructions
+├── TESTING_AND_ML_GUIDE.md    # Testing and ML documentation
+└── vercel.json                # Vercel deployment config
+```
 
-# Backend Key Files
-- index.ts: Set up Express, connect DB, routes for /transactions, /alerts, /reports.
-- Transaction simulation: setInterval to generate mock tx every 5s.
-  
-# Frontend Key Files
-- Dashboard.tsx: Fetch alerts every 10s, display with TanStack Table (sortable, filters).
-  - Use useReactTable hook for headless table logic.
+## Backend Structure (`backend/`)
+```
+backend/
+├── index.ts                   # Main server entry point
+├── server.ts                  # Express app and HTTP server setup
+├── package.json               # Backend dependencies and scripts
+├── tsconfig.json              # TypeScript configuration
+├── prisma/                    # Database ORM and schema
+│   ├── schema.prisma          # Database schema definition
+│   ├── client.ts              # Prisma client instance
+│   └── migrations/            # Database migration files
+├── routes/                    # API route handlers
+│   ├── index.ts               # Route registration
+│   └── ml.ts                  # ML-related endpoints
+├── services/                  # Business logic services
+│   ├── index.ts               # Service exports
+│   ├── mlRiskAnalyzer.ts      # ML risk scoring logic
+│   ├── riskAnalyzer.ts        # Basic rule-based risk analyzer
+│   └── transactionSimulator.ts # Transaction simulation service
+├── websocket/                 # WebSocket server setup
+│   └── index.ts               # Socket.IO configuration
+├── scripts/                   # Utility scripts
+│   └── reset-prisma.ts        # Prisma client reset script
+├── tests/                     # Test files
+│   ├── setup.ts               # Test environment setup
+│   ├── globalSetup.ts         # Global test configuration
+│   ├── mlRiskAnalyzer.test.ts # ML analyzer tests
+│   ├── riskAnalyzer.test.ts   # Basic analyzer tests
+│   └── transactionSimulator.test.ts # Simulator tests
+├── seed.ts                    # Database seeding script
+├── seed-production-db.ts      # Production database seeding
+└── wipe-production-db.ts      # Production database reset
+```
+
+## Frontend Structure (`frontend/`)
+```
+frontend/
+├── src/                       # Source code
+│   ├── main.tsx               # React app entry point
+│   ├── App.tsx                # Main app component
+│   ├── components/            # React components
+│   │   ├── Dashboard.tsx      # Main dashboard component
+│   │   ├── AlertsTable.tsx    # Alerts table with TanStack Table
+│   │   ├── StatsCards.tsx     # Statistics cards
+│   │   ├── ConnectionStatus.tsx # WebSocket connection status
+│   │   └── charts/            # Chart components
+│   │       ├── index.ts       # Chart exports
+│   │       ├── AlertTrendsChart.tsx # Alert trends visualization
+│   │       ├── RiskDistributionChart.tsx # Risk distribution
+│   │       └── TransactionVolumeChart.tsx # Transaction volume
+│   ├── services/              # API and data services
+│   │   ├── api.ts             # HTTP API client
+│   │   ├── websocket.ts       # WebSocket client
+│   │   └── dashboardData.ts   # Dashboard data fetching
+│   ├── stores/                # State management (Zustand)
+│   │   ├── index.ts           # Store exports
+│   │   ├── dashboardStore.ts  # Dashboard state
+│   │   └── websocketStore.ts  # WebSocket state
+│   ├── styles/                # Styled components and theming
+│   │   ├── GlobalStyles.ts    # Global CSS styles
+│   │   ├── theme.ts           # Theme configuration
+│   │   ├── components.ts      # Styled component definitions
+│   │   └── styled.d.ts        # Styled components types
+│   ├── test/                  # Test files
+│   │   ├── setup.ts           # Test setup
+│   │   └── Dashboard.test.tsx # Dashboard component tests
+│   └── vite-env.d.ts          # Vite environment types
+├── public/                    # Static assets
+├── package.json               # Frontend dependencies
+├── tsconfig.json              # TypeScript configuration
+├── vite.config.ts             # Vite build configuration
+├── vitest.config.ts           # Test configuration
+└── vercel.json                # Vercel deployment config
+```
+
+## Key File Patterns
+
+### Backend Patterns
+- **Entry Points**: `index.ts` (main), `server.ts` (app setup)
+- **Services**: `services/*.ts` (business logic)
+- **Routes**: `routes/*.ts` (API endpoints)
+- **Database**: `prisma/` (schema, migrations, client)
+- **Tests**: `tests/*.test.ts` (Jest test files)
+- **Scripts**: `scripts/*.ts` (utility scripts)
+
+### Frontend Patterns
+- **Components**: `components/*.tsx` (React components)
+- **Services**: `services/*.ts` (API and data fetching)
+- **Stores**: `stores/*.ts` (Zustand state management)
+- **Styles**: `styles/*.ts` (styled-components and theming)
+- **Tests**: `test/*.test.tsx` (component tests)
+
+## Database Schema (`backend/prisma/schema.prisma`)
+```prisma
+// Core entities
+model users { ... }           # User accounts
+model devices { ... }         # Device information
+model merchants { ... }       # Merchant data with risk levels
+model transactions { ... }    # Financial transactions
+
+// Risk and alerts
+model risk_signals { ... }    # Risk assessments from analyzers
+model alerts { ... }          # High-risk transaction alerts
+
+// ML and training
+model training_data { ... }   # ML training data with JSONB features
+model ml_models { ... }       # Stored model parameters
+```
+
+## Key Architectural Patterns
+
+### 1. **Dual Risk Analyzer System**
+- `services/mlRiskAnalyzer.ts` - ML-based risk scoring
+- `services/riskAnalyzer.ts` - Rule-based risk scoring
+- Side-by-side comparison in `services/transactionSimulator.ts`
+
+### 2. **Real-time Updates**
+- `websocket/index.ts` - Socket.IO server setup
+- `frontend/src/services/websocket.ts` - WebSocket client
+- `frontend/src/stores/websocketStore.ts` - WebSocket state management
+
+### 3. **State Management**
+- `frontend/src/stores/dashboardStore.ts` - Dashboard data state
+- `frontend/src/stores/websocketStore.ts` - Real-time connection state
+- Zustand for lightweight state management
+
+### 4. **Styling Architecture**
+- `frontend/src/styles/theme.ts` - Theme configuration
+- `frontend/src/styles/components.ts` - Styled component definitions
+- Consistent design system with styled-components
+
+### 5. **Testing Strategy**
+- **Backend**: Jest with supertest for API testing
+- **Frontend**: Vitest with React Testing Library
+- **Integration**: Docker-based test environment
+
+## Development Workflow
+
+### 1. **Local Development**
+```bash
+# Start all services
+docker compose up -d
+
+# Backend development
+cd backend
+npm run dev
+
+# Frontend development
+cd frontend
+npm run dev
+```
+
+### 2. **Database Management**
+```bash
+# Generate Prisma client
+npx prisma generate
+
+# Run migrations
+npx prisma migrate dev
+
+# Seed database
+npm run seed
+
+# Open Prisma Studio
+npx prisma studio
+```
+
+### 3. **Testing**
+```bash
+# Backend tests
+cd backend && npm test
+
+# Frontend tests
+cd frontend && npm test
+
+# Integration tests
+npm run test:integration
+```
+
+## Deployment Structure
+
+### **Railway Deployment**
+- Backend API and database hosted on Railway
+- Production database seeding with `seed-production-db.ts`
+- Environment variables for production configuration
+
+### **Vercel Deployment**
+- Frontend hosted on Vercel
+- Static asset optimization
+- Edge functions for API proxying (if needed)
+
+### **Docker Containerization**
+- Multi-stage builds for optimization
+- Health checks for service monitoring
+- Volume persistence for database data
   - Example: Define columns with createColumnHelper<Alert>(), enable sorting/filtering.
 - Chart: Use Chart.js line for historical (query alerts COUNT by hour).
 - Styles: Tailwind with fintech theme (dark, red for high-risk).
