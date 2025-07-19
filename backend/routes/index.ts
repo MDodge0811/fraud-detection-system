@@ -2,6 +2,7 @@ import express from 'express';
 import { prisma } from '../prisma/client';
 import { analyzeTransactionRisk, getSimulationStatus } from '../services';
 import mlRouter from './ml';
+import { handleRouteError, ErrorMessages, ErrorCodes } from '../utils/errorHandler';
 
 const router = express.Router();
 
@@ -21,8 +22,8 @@ router.get('/alerts', async (req, res) => {
     if (req.query.limit && (isNaN(limit) || limit < 1 || limit > 1000)) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid limit parameter. Must be between 1 and 1000.',
-        code: 'INVALID_LIMIT',
+        error: ErrorMessages.INVALID_LIMIT,
+        code: ErrorCodes.INVALID_LIMIT,
       });
     }
 
@@ -50,22 +51,7 @@ router.get('/alerts', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error fetching alerts:', error);
-
-    // Check if it's a database connection issue
-    if (error instanceof Error && error.message.includes('database')) {
-      return res.status(503).json({
-        success: false,
-        error: 'Alerts service temporarily unavailable',
-        code: 'SERVICE_UNAVAILABLE',
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error while fetching alerts',
-      code: 'INTERNAL_ERROR',
-    });
+    handleRouteError(error, res, 'ALERTS', 'FETCHING_ALERTS');
   }
 });
 
@@ -80,8 +66,8 @@ router.get('/transactions', async (req, res) => {
     if (req.query.limit && (isNaN(limit) || limit < 1 || limit > 1000)) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid limit parameter. Must be between 1 and 1000.',
-        code: 'INVALID_LIMIT',
+        error: ErrorMessages.INVALID_LIMIT,
+        code: ErrorCodes.INVALID_LIMIT,
       });
     }
 
@@ -107,22 +93,7 @@ router.get('/transactions', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error fetching transactions:', error);
-
-    // Check if it's a database connection issue
-    if (error instanceof Error && error.message.includes('database')) {
-      return res.status(503).json({
-        success: false,
-        error: 'Transactions service temporarily unavailable',
-        code: 'SERVICE_UNAVAILABLE',
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error while fetching transactions',
-      code: 'INTERNAL_ERROR',
-    });
+    handleRouteError(error, res, 'TRANSACTIONS', 'FETCHING_TRANSACTIONS');
   }
 });
 
@@ -136,8 +107,8 @@ router.get('/risk-signals', async (req, res) => {
     if (req.query.limit && (isNaN(limit) || limit < 1 || limit > 1000)) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid limit parameter. Must be between 1 and 1000.',
-        code: 'INVALID_LIMIT',
+        error: ErrorMessages.INVALID_LIMIT,
+        code: ErrorCodes.INVALID_LIMIT,
       });
     }
 
@@ -164,22 +135,7 @@ router.get('/risk-signals', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error fetching risk signals:', error);
-
-    // Check if it's a database connection issue
-    if (error instanceof Error && error.message.includes('database')) {
-      return res.status(503).json({
-        success: false,
-        error: 'Risk signals service temporarily unavailable',
-        code: 'SERVICE_UNAVAILABLE',
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error while fetching risk signals',
-      code: 'INTERNAL_ERROR',
-    });
+    handleRouteError(error, res, 'RISK_SIGNALS', 'FETCHING_RISK_SIGNALS');
   }
 });
 
@@ -209,22 +165,7 @@ router.get('/dashboard/stats', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
-
-    // Check if it's a database connection issue
-    if (error instanceof Error && error.message.includes('database')) {
-      return res.status(503).json({
-        success: false,
-        error: 'Dashboard service temporarily unavailable',
-        code: 'SERVICE_UNAVAILABLE',
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error while fetching dashboard stats',
-      code: 'INTERNAL_ERROR',
-    });
+    handleRouteError(error, res, 'DASHBOARD', 'FETCHING_DASHBOARD_STATS');
   }
 });
 
@@ -241,22 +182,7 @@ router.get('/simulation/status', (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error getting simulation status:', error);
-
-    // Check if it's a service unavailable issue
-    if (error instanceof Error && error.message.includes('simulation')) {
-      return res.status(503).json({
-        success: false,
-        error: 'Simulation service temporarily unavailable',
-        code: 'SERVICE_UNAVAILABLE',
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error while getting simulation status',
-      code: 'INTERNAL_ERROR',
-    });
+    handleRouteError(error, res, 'SIMULATION', 'GETTING_SIMULATION_STATUS');
   }
 });
 
@@ -269,8 +195,8 @@ router.get('/risk-analysis/:transactionId', async (req, res) => {
     if (!transactionId || typeof transactionId !== 'string' || transactionId.trim() === '') {
       return res.status(400).json({
         success: false,
-        error: 'Invalid transaction ID provided',
-        code: 'INVALID_TRANSACTION_ID',
+        error: ErrorMessages.INVALID_TRANSACTION_ID,
+        code: ErrorCodes.INVALID_TRANSACTION_ID,
       });
     }
 
@@ -287,8 +213,8 @@ router.get('/risk-analysis/:transactionId', async (req, res) => {
     if (!transaction) {
       return res.status(404).json({
         success: false,
-        error: 'Transaction not found',
-        code: 'TRANSACTION_NOT_FOUND',
+        error: ErrorMessages.TRANSACTION_NOT_FOUND,
+        code: ErrorCodes.TRANSACTION_NOT_FOUND,
       });
     }
 
@@ -309,31 +235,7 @@ router.get('/risk-analysis/:transactionId', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error analyzing transaction risk:', error);
-
-    // Check if it's a risk analysis service issue
-    if (error instanceof Error && error.message.includes('risk analysis')) {
-      return res.status(503).json({
-        success: false,
-        error: 'Risk analysis service temporarily unavailable',
-        code: 'SERVICE_UNAVAILABLE',
-      });
-    }
-
-    // Check if it's a database connection issue
-    if (error instanceof Error && error.message.includes('database')) {
-      return res.status(503).json({
-        success: false,
-        error: 'Transaction service temporarily unavailable',
-        code: 'SERVICE_UNAVAILABLE',
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error while analyzing transaction risk',
-      code: 'INTERNAL_ERROR',
-    });
+    handleRouteError(error, res, 'TRANSACTION_SERVICE', 'ANALYZING_TRANSACTION_RISK');
   }
 });
 

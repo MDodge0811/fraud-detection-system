@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { trainModel, getModelStats } from '../services/mlRiskAnalyzer';
+import { handleRouteError } from '../utils/errorHandler';
 
 const router = Router();
 
@@ -12,32 +13,7 @@ router.get('/stats', async (req, res) => {
       data: stats,
     });
   } catch (error) {
-    console.error('Error getting ML model stats:', error);
-
-    // Check if it's a "no model found" scenario
-    if (error instanceof Error && error.message.includes('No existing model')) {
-      return res.status(404).json({
-        success: false,
-        error: 'No ML model found. Please train a model first.',
-        code: 'MODEL_NOT_FOUND',
-      });
-    }
-
-    // Check if it's a database connection issue
-    if (error instanceof Error && error.message.includes('database')) {
-      return res.status(503).json({
-        success: false,
-        error: 'ML service temporarily unavailable',
-        code: 'SERVICE_UNAVAILABLE',
-      });
-    }
-
-    // Default to 500 for unexpected errors
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error while retrieving ML model statistics',
-      code: 'INTERNAL_ERROR',
-    });
+    handleRouteError(error, res, 'ML_SERVICE', 'GETTING_ML_STATS');
   }
 });
 
@@ -53,41 +29,7 @@ router.post('/train', async (req, res) => {
       data: stats,
     });
   } catch (error) {
-    console.error('Error training ML model:', error);
-
-    // Check if it's a training data issue
-    if (error instanceof Error && error.message.includes('insufficient data')) {
-      return res.status(422).json({
-        success: false,
-        error: 'Insufficient training data. Need more samples to train the model.',
-        code: 'INSUFFICIENT_DATA',
-      });
-    }
-
-    // Check if it's a database connection issue
-    if (error instanceof Error && error.message.includes('database')) {
-      return res.status(503).json({
-        success: false,
-        error: 'ML service temporarily unavailable',
-        code: 'SERVICE_UNAVAILABLE',
-      });
-    }
-
-    // Check if it's a model validation error
-    if (error instanceof Error && error.message.includes('validation')) {
-      return res.status(422).json({
-        success: false,
-        error: 'Model validation failed',
-        code: 'VALIDATION_ERROR',
-      });
-    }
-
-    // Default to 500 for unexpected errors
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error during model training',
-      code: 'INTERNAL_ERROR',
-    });
+    handleRouteError(error, res, 'ML_SERVICE', 'TRAINING_MODEL');
   }
 });
 
@@ -124,24 +66,8 @@ router.get('/training-data', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error getting training data stats:', error);
-
-    // Check if it's a database connection issue
-    if (error instanceof Error && error.message.includes('database')) {
-      return res.status(503).json({
-        success: false,
-        error: 'Training data service temporarily unavailable',
-        code: 'SERVICE_UNAVAILABLE',
-      });
-    }
-
-    // Default to 500 for unexpected errors
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error while retrieving training data statistics',
-      code: 'INTERNAL_ERROR',
-    });
+    handleRouteError(error, res, 'TRAINING_DATA', 'GETTING_TRAINING_DATA');
   }
 });
 
-export default router; 
+export default router;
