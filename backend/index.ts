@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import { Server } from 'socket.io';
+import { execSync } from 'child_process';
 import { prisma } from './prisma/client';
 import { createApp, createHttpServer, createSocketServer } from './server';
 import { startTransactionSimulation, stopTransactionSimulation } from './services';
@@ -18,9 +19,22 @@ const PORT = process.env.PORT || 3000;
 // Start server
 async function startServer() {
   try {
-    // Test database connection
+    // Reset Prisma client to clear cached query plans
+    await prisma.$disconnect();
     await prisma.$connect();
-    console.log('✅ Database connected successfully');
+    console.log('✅ Database connected successfully (Prisma client reset)');
+
+    // Verify Prisma client compatibility with a simple query
+    try {
+      await prisma.users.findMany({ take: 1 });
+      console.log('✅ Prisma client query test successful');
+    } catch (queryError) {
+      console.error('❌ Prisma client query test failed:', queryError);
+      console.log('🔄 Attempting to regenerate Prisma client...');
+      // Force regenerate Prisma client
+      execSync('npx prisma generate', { stdio: 'inherit' });
+      console.log('✅ Prisma client regenerated');
+    }
 
     // Create Express app
     const app = createApp();
