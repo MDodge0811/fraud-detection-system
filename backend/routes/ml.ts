@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { trainModel, getModelStats } from '../services/mlRiskAnalyzer';
+import { handleRouteError } from '../utils/errorHandler';
 
 const router = Router();
 
@@ -12,11 +13,7 @@ router.get('/stats', async (req, res) => {
       data: stats,
     });
   } catch (error) {
-    console.error('Error getting ML model stats:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get ML model statistics',
-    });
+    handleRouteError(error, res, 'ML_SERVICE', 'GETTING_ML_STATS');
   }
 });
 
@@ -25,18 +22,14 @@ router.post('/train', async (req, res) => {
   try {
     await trainModel();
     const stats = await getModelStats();
-    
-    res.json({
+
+    res.status(201).json({
       success: true,
       message: 'Model training completed successfully',
       data: stats,
     });
   } catch (error) {
-    console.error('Error training ML model:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to train ML model',
-    });
+    handleRouteError(error, res, 'ML_SERVICE', 'TRAINING_MODEL');
   }
 });
 
@@ -44,7 +37,7 @@ router.post('/train', async (req, res) => {
 router.get('/training-data', async (req, res) => {
   try {
     const { prisma } = await import('../prisma/client');
-    
+
     const totalSamples = await prisma.training_data.count();
     const recentSamples = await prisma.training_data.count({
       where: {
@@ -73,12 +66,8 @@ router.get('/training-data', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error getting training data stats:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get training data statistics',
-    });
+    handleRouteError(error, res, 'TRAINING_DATA', 'GETTING_TRAINING_DATA');
   }
 });
 
-export default router; 
+export default router;

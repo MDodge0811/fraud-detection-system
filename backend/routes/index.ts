@@ -2,9 +2,10 @@ import express from 'express';
 import { prisma } from '../prisma/client';
 import { analyzeTransactionRisk, getSimulationStatus } from '../services';
 import mlRouter from './ml';
+import { handleRouteError, ErrorMessages, ErrorCodes } from '../utils/errorHandler';
 
 const router = express.Router();
-// triggering a build
+
 // Health check endpoint
 router.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -13,8 +14,18 @@ router.get('/health', (req, res) => {
 // Alerts endpoint - GET alerts with optional limit
 router.get('/alerts', async (req, res) => {
   try {
+    // Input validation
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
     const allTime = req.query.allTime === 'true';
+
+    // Validate limit parameter
+    if (req.query.limit && (isNaN(limit) || limit < 1 || limit > 1000)) {
+      return res.status(400).json({
+        success: false,
+        error: ErrorMessages.INVALID_LIMIT,
+        code: ErrorCodes.INVALID_LIMIT,
+      });
+    }
 
     const alerts = await prisma.alerts.findMany({
       orderBy: { created_at: 'desc' },
@@ -33,23 +44,32 @@ router.get('/alerts', async (req, res) => {
     res.json({
       success: true,
       data: alerts,
-      count: alerts.length,
+      pagination: {
+        count: alerts.length,
+        limit: allTime ? 'all' : limit,
+        hasMore: allTime ? false : alerts.length === limit,
+      },
     });
   } catch (error) {
-    console.error('Error fetching alerts:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch alerts',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    handleRouteError(error, res, 'ALERTS', 'FETCHING_ALERTS');
   }
 });
 
 // Transactions endpoint - GET transactions with optional limit
 router.get('/transactions', async (req, res) => {
   try {
+    // Input validation
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;
     const allTime = req.query.allTime === 'true';
+
+    // Validate limit parameter
+    if (req.query.limit && (isNaN(limit) || limit < 1 || limit > 1000)) {
+      return res.status(400).json({
+        success: false,
+        error: ErrorMessages.INVALID_LIMIT,
+        code: ErrorCodes.INVALID_LIMIT,
+      });
+    }
 
     const transactions = await prisma.transactions.findMany({
       orderBy: { timestamp: 'desc' },
@@ -66,24 +86,35 @@ router.get('/transactions', async (req, res) => {
     res.json({
       success: true,
       data: transactions,
-      count: transactions.length,
+      pagination: {
+        count: transactions.length,
+        limit: allTime ? 'all' : limit,
+        hasMore: allTime ? false : transactions.length === limit,
+      },
     });
   } catch (error) {
-    console.error('Error fetching transactions:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch transactions',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    handleRouteError(error, res, 'TRANSACTIONS', 'FETCHING_TRANSACTIONS');
   }
 });
 
 // Risk signals endpoint - GET recent risk signals
 router.get('/risk-signals', async (req, res) => {
   try {
+    // Input validation
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;
+
+    // Validate limit parameter
+    if (req.query.limit && (isNaN(limit) || limit < 1 || limit > 1000)) {
+      return res.status(400).json({
+        success: false,
+        error: ErrorMessages.INVALID_LIMIT,
+        code: ErrorCodes.INVALID_LIMIT,
+      });
+    }
+
     const riskSignals = await prisma.risk_signals.findMany({
       orderBy: { created_at: 'desc' },
-      take: 100,
+      take: limit,
       include: {
         transactions: {
           include: {
@@ -97,15 +128,14 @@ router.get('/risk-signals', async (req, res) => {
     res.json({
       success: true,
       data: riskSignals,
-      count: riskSignals.length,
+      pagination: {
+        count: riskSignals.length,
+        limit,
+        hasMore: riskSignals.length === limit,
+      },
     });
   } catch (error) {
-    console.error('Error fetching risk signals:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch risk signals',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    handleRouteError(error, res, 'RISK_SIGNALS', 'FETCHING_RISK_SIGNALS');
   }
 });
 
@@ -135,12 +165,7 @@ router.get('/dashboard/stats', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch dashboard stats',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    handleRouteError(error, res, 'DASHBOARD', 'FETCHING_DASHBOARD_STATS');
   }
 });
 
@@ -157,12 +182,7 @@ router.get('/simulation/status', (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error getting simulation status:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get simulation status',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    handleRouteError(error, res, 'SIMULATION', 'GETTING_SIMULATION_STATUS');
   }
 });
 
@@ -170,6 +190,15 @@ router.get('/simulation/status', (req, res) => {
 router.get('/risk-analysis/:transactionId', async (req, res) => {
   try {
     const { transactionId } = req.params;
+
+    // Input validation
+    if (!transactionId || typeof transactionId !== 'string' || transactionId.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        error: ErrorMessages.INVALID_TRANSACTION_ID,
+        code: ErrorCodes.INVALID_TRANSACTION_ID,
+      });
+    }
 
     // Get transaction details
     const transaction = await prisma.transactions.findUnique({
@@ -184,7 +213,8 @@ router.get('/risk-analysis/:transactionId', async (req, res) => {
     if (!transaction) {
       return res.status(404).json({
         success: false,
-        error: 'Transaction not found',
+        error: ErrorMessages.TRANSACTION_NOT_FOUND,
+        code: ErrorCodes.TRANSACTION_NOT_FOUND,
       });
     }
 
@@ -205,12 +235,7 @@ router.get('/risk-analysis/:transactionId', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error analyzing transaction risk:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to analyze transaction risk',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    handleRouteError(error, res, 'TRANSACTION_SERVICE', 'ANALYZING_TRANSACTION_RISK');
   }
 });
 

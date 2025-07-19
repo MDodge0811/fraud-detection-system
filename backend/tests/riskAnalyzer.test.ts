@@ -1,4 +1,4 @@
-import { analyzeTransactionRisk, getRiskLevel } from '../services/riskAnalyzer';
+import { analyzeTransactionRisk, getRiskLevel } from '../services/basicRiskAnalyzer';
 import { prisma } from '../prisma/client';
 
 describe('Risk Analyzer', () => {
