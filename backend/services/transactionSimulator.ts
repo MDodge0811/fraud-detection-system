@@ -1,6 +1,6 @@
 import { prisma } from '../prisma/client';
 import { analyzeTransactionRiskML } from './mlRiskAnalyzer';
-import { analyzeTransactionRisk } from './riskAnalyzer';
+import { analyzeTransactionRisk } from './basicRiskAnalyzer';
 import { Server } from 'socket.io';
 
 // Extend global type for WebSocket server
@@ -43,14 +43,16 @@ async function getRandomUser(): Promise<any> {
       transactions: true,
     },
   });
-  if (users.length === 0) return null;
+  if (users.length === 0) {
+    return null;
+  }
 
   // 80% chance of normal user, 20% chance of suspicious user
   const isSuspicious = Math.random() < 0.2;
-  
+
   if (isSuspicious) {
     // Select users with fewer transactions (new accounts - higher fraud risk)
-    const suspiciousUsers = users.filter(user => 
+    const suspiciousUsers = users.filter(user =>
       user.transactions && user.transactions.length < 5,
     );
     if (suspiciousUsers.length > 0) {
@@ -64,11 +66,13 @@ async function getRandomUser(): Promise<any> {
 // Enhanced device selection with fraud patterns
 async function getRandomDevice(): Promise<any> {
   const devices = await prisma.devices.findMany();
-  if (devices.length === 0) return null;
+  if (devices.length === 0) {
+    return null;
+  }
 
   // 75% chance of normal device, 25% chance of suspicious device
   const isSuspicious = Math.random() < 0.25;
-  
+
   if (isSuspicious) {
     // Select newer devices (higher fraud risk)
     const suspiciousDevices = devices.filter(device => {
@@ -86,15 +90,17 @@ async function getRandomDevice(): Promise<any> {
 // Enhanced merchant selection with fraud patterns
 async function getRandomMerchant(): Promise<any> {
   const merchants = await prisma.merchants.findMany();
-  if (merchants.length === 0) return null;
+  if (merchants.length === 0) {
+    return null;
+  }
 
   // 70% chance of normal merchant, 30% chance of high-risk merchant
   const isHighRisk = Math.random() < 0.3;
-  
+
   if (isHighRisk) {
     // Select merchants with higher risk levels
-    const highRiskMerchants = merchants.filter(merchant => 
-      (merchant.risk_level || 50) > 70
+    const highRiskMerchants = merchants.filter(merchant =>
+      (merchant.risk_level || 50) > 70,
     );
     if (highRiskMerchants.length > 0) {
       return highRiskMerchants[Math.floor(Math.random() * highRiskMerchants.length)];
@@ -143,11 +149,11 @@ export async function simulateTransaction() {
     // Generate transaction with enhanced patterns
     const amount = generateRandomAmount();
     const suspiciousPattern = generateSuspiciousTransaction();
-    
+
     // Apply suspicious pattern modifications
     let finalAmount = amount;
     let transactionNotes = '';
-    
+
     if (suspiciousPattern.type === 'rapid_succession') {
       // Simulate rapid successive transactions
       const recentTransactions = await prisma.transactions.count({
@@ -377,9 +383,17 @@ export function getSimulationStatus() {
 
 // Helper function to get risk level description
 function getRiskLevel(riskScore: number): string {
-  if (riskScore >= 90) return 'Critical';
-  if (riskScore >= 80) return 'High';
-  if (riskScore >= 70) return 'Elevated';
-  if (riskScore >= 50) return 'Medium';
+  if (riskScore >= 90) {
+    return 'Critical';
+  }
+  if (riskScore >= 80) {
+    return 'High';
+  }
+  if (riskScore >= 70) {
+    return 'Elevated';
+  }
+  if (riskScore >= 50) {
+    return 'Medium';
+  }
   return 'Low';
 }
