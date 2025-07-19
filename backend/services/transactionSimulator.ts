@@ -1,6 +1,7 @@
 import { prisma } from '../prisma/client';
 import { analyzeTransactionRiskML } from './mlRiskAnalyzer';
 import { analyzeTransactionRisk } from './riskAnalyzer';
+import { Server } from 'socket.io';
 
 // Extend global type for WebSocket server
 declare global {
@@ -37,7 +38,11 @@ function generateRandomAmount(): number {
 
 // Enhanced user selection with fraud patterns
 async function getRandomUser(): Promise<any> {
-  const users = await prisma.users.findMany();
+  const users = await prisma.users.findMany({
+    include: {
+      transactions: true,
+    },
+  });
   if (users.length === 0) return null;
 
   // 80% chance of normal user, 20% chance of suspicious user
@@ -46,7 +51,7 @@ async function getRandomUser(): Promise<any> {
   if (isSuspicious) {
     // Select users with fewer transactions (new accounts - higher fraud risk)
     const suspiciousUsers = users.filter(user => 
-      user.transactions && user.transactions.length < 5
+      user.transactions && user.transactions.length < 5,
     );
     if (suspiciousUsers.length > 0) {
       return suspiciousUsers[Math.floor(Math.random() * suspiciousUsers.length)];
