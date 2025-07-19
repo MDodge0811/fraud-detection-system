@@ -483,8 +483,23 @@ describe('Main Routes', () => {
     it('should return risk analysis for valid transaction', async () => {
       const mockRiskAnalysis = {
         riskScore: 65,
-        features: { amount: 300, location: 'US' },
+        features: {
+          normalizedAmount: 0.03,
+          normalizedDeviceAge: 0.5,
+          normalizedMerchantRisk: 0.4,
+          normalizedFrequency: 0.1,
+          normalizedAvgAmount: 0.2,
+          raw: {
+            amount: 300,
+            deviceAge: 12,
+            merchantRisk: 40,
+            recentTransactions: 1,
+            avgUserAmount: 1000,
+          },
+        },
         reasons: ['amount', 'merchant_risk'],
+        riskLevel: 'High',
+        riskColor: '#ea580c',
       };
 
       mockAnalyzeTransactionRisk.mockResolvedValue(mockRiskAnalysis);
