@@ -7,7 +7,7 @@
 */
 -- AlterTable
 ALTER TABLE "training_data" DROP COLUMN "features_json",
-ADD COLUMN     "features" JSONB NOT NULL;
+ADD COLUMN     "features" JSONB NOT NULL DEFAULT '{}';
 
 -- CreateTable
 CREATE TABLE "ml_models" (
