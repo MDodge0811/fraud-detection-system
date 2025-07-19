@@ -216,7 +216,7 @@ async function seed() {
       await prisma.training_data.create({
         data: {
           transaction_id: transaction.transaction_id,
-          features_json: {
+          features: {
             amount: amount,
             device_age: Math.floor(Math.random() * 24),
             merchant_risk: merchant.risk_level,

@@ -1,9 +1,16 @@
 declare module 'ml' {
   export namespace Classification {
     export class LogisticRegression {
+      constructor(options?: {
+        numSteps?: number;
+        learningRate?: number;
+        regularization?: number;
+      });
       train(features: number[][], labels: number[]): void;
       predict(features: number[]): number;
       predictProbability(features: number[]): number;
+      static load(model: any): LogisticRegression;
+      toJSON(): any;
     }
   }
 

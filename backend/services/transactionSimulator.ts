@@ -113,7 +113,7 @@ export async function simulateTransaction() {
     await prisma.training_data.create({
       data: {
         transaction_id: transaction.transaction_id,
-        features_json: {
+        features: {
           amount: amount,
           device_age: riskAnalysis.features.raw?.deviceAge || 0,
           merchant_risk: riskAnalysis.features.raw?.merchantRisk || 50,

@@ -9,6 +9,9 @@ module.exports = {
   transform: {
     '^.+\\.ts$': 'ts-jest',
   },
+  moduleNameMapper: {
+    '^ml$': '<rootDir>/tests/__mocks__/ml.ts',
+  },
   collectCoverageFrom: [
     'services/**/*.ts',
     'index.ts',

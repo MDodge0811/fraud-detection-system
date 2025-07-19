@@ -1,5 +1,5 @@
 import { prisma } from '../prisma/client';
-import * as ML from 'ml';
+import { PolynomialRegression } from 'ml-regression-polynomial';
 
 // Enhanced feature extraction with more sophisticated patterns
 interface MLFeatures {
@@ -36,7 +36,7 @@ interface MLFeatures {
   };
 }
 
-// ML Model interface
+// Polynomial Regression Model interface
 interface RiskModel {
   predict: (features: number[]) => number;
   train: (features: number[][], labels: number[]) => void;
@@ -44,16 +44,13 @@ interface RiskModel {
   load: (model: any) => void;
 }
 
-class EnhancedRiskModel implements RiskModel {
-  private model: any;
+class PolynomialRiskModel implements RiskModel {
+  private model: PolynomialRegression | null = null;
   private isTrained: boolean = false;
+  private degree: number = 3; // Polynomial degree
 
   constructor() {
-    this.model = new ML.Classification.LogisticRegression({
-      numSteps: 1000,
-      learningRate: 0.1,
-      regularization: 0.01,
-    });
+    // Model will be initialized when we have training data
   }
 
   train(features: number[][], labels: number[]): void {
@@ -63,21 +60,29 @@ class EnhancedRiskModel implements RiskModel {
     }
 
     try {
-      this.model.train(features, labels);
+      // For polynomial regression, we need to flatten features into a single dimension
+      // We'll use the first feature as x and create a composite score as y
+      const x = features.map(f => f[0] || 0); // Use first feature (normalized amount)
+      const y = labels.map(l => l / 100); // Normalize labels to 0-1 range
+
+      this.model = new PolynomialRegression(x, y, this.degree);
       this.isTrained = true;
-      console.log(`Trained model with ${features.length} samples`);
+      console.log(`Trained polynomial model with ${features.length} samples, degree ${this.degree}`);
     } catch (error) {
-      console.error('Error training model:', error);
+      console.error('Error training polynomial model:', error);
+      this.model = null;
     }
   }
 
   predict(features: number[]): number {
-    if (!this.isTrained) {
+    if (!this.isTrained || !this.model) {
       return 0.5; // Default risk score
     }
 
     try {
-      const prediction = this.model.predict(features);
+      // Use the first feature for prediction (normalized amount)
+      const x = features[0] || 0;
+      const prediction = this.model.predict(x);
       return Math.max(0, Math.min(1, prediction)); // Ensure 0-1 range
     } catch (error) {
       console.error('Error predicting risk:', error);
@@ -86,27 +91,41 @@ class EnhancedRiskModel implements RiskModel {
   }
 
   save(): any {
-    return this.model.toJSON();
+    if (!this.model) {
+      return null;
+    }
+    return {
+      coefficients: this.model.coefficients,
+      degree: this.degree,
+      isTrained: this.isTrained,
+    };
   }
 
-  load(model: any): void {
+  load(modelData: any): void {
     try {
-      this.model = ML.Classification.LogisticRegression.load(model);
-      this.isTrained = true;
+      if (modelData && modelData.coefficients) {
+        // Create a new polynomial regression with the saved coefficients
+        this.model = new PolynomialRegression([0], [0], modelData.degree);
+        this.model.coefficients = modelData.coefficients;
+        this.degree = modelData.degree;
+        this.isTrained = modelData.isTrained;
+        console.log('Loaded existing polynomial model');
+      }
     } catch (error) {
-      console.error('Error loading model:', error);
+      console.error('Error loading polynomial model:', error);
+      this.model = null;
     }
   }
 }
 
 // Global model instance
-let riskModel: EnhancedRiskModel | null = null;
+let riskModel: PolynomialRiskModel | null = null;
 
 // Initialize the ML model
 async function initializeModel(): Promise<void> {
   if (riskModel) return;
 
-  riskModel = new EnhancedRiskModel();
+  riskModel = new PolynomialRiskModel();
   
   // Try to load existing model from database
   try {
@@ -117,9 +136,9 @@ async function initializeModel(): Promise<void> {
 
     if (savedModel && savedModel.model_data) {
       riskModel.load(savedModel.model_data);
-      console.log('Loaded existing ML model');
+      console.log('Loaded existing polynomial model');
     } else {
-      console.log('No existing model found, will train new model');
+      console.log('No existing model found, will train new polynomial model');
     }
   } catch (error) {
     console.error('Error loading model:', error);
@@ -142,7 +161,6 @@ async function extractMLFeatures(
     // Basic features (existing logic)
     const merchant = await prisma.merchants.findUnique({
       where: { merchant_id: merchantId },
-      include: { category: true },
     });
     const merchantRisk = merchant?.risk_level || 50;
 
@@ -203,25 +221,21 @@ async function extractMLFeatures(
       where: { user_id: userId },
       _sum: { amount: true },
     });
+
     const userBehaviorScore = userTransactionCount < 10 ? 0.7 : 0.3;
 
-    // Merchant category risk
-    const merchantCategoryRisk = merchant?.category?.risk_level || 0.5;
+    // Merchant category risk (simplified - category is a string in schema)
+    const merchantCategoryRisk = 0.5; // Default risk for category
 
     // Transaction pattern risk
-    const patternRisk = calculatePatternRisk(userTransactions, amount);
+    const transactionPatternRisk = calculatePatternRisk(userTransactions, amount);
 
-    // Normalize all features
-    const normalizedAmount = Math.min(amount / 10000, 1);
-    const normalizedDeviceAge = Math.min(deviceAge / 24, 1);
+    // Normalize features
+    const normalizedAmount = Math.min(amount / 10000, 1); // Cap at 10k
+    const normalizedDeviceAge = Math.min(deviceAge / 24, 1); // Cap at 24 hours
     const normalizedMerchantRisk = merchantRisk / 100;
-    const normalizedFrequency = Math.min(recentTransactions / 10, 1);
-    const normalizedAvgAmount = Math.min(avgUserAmount / 5000, 1);
-    const normalizedAmountVelocity = Math.min(amountVelocity, 1);
-    const normalizedDeviceFingerprintRisk = deviceFingerprintRisk;
-    const normalizedUserBehaviorScore = userBehaviorScore;
-    const normalizedMerchantCategoryRisk = merchantCategoryRisk / 100;
-    const normalizedTransactionPatternRisk = patternRisk;
+    const normalizedFrequency = Math.min(recentTransactions / 10, 1); // Cap at 10 transactions
+    const normalizedAvgAmount = Math.min(avgUserAmount / 5000, 1); // Cap at 5k
 
     return {
       normalizedAmount,
@@ -231,12 +245,12 @@ async function extractMLFeatures(
       normalizedAvgAmount,
       timeOfDay,
       dayOfWeek,
-      amountVelocity: normalizedAmountVelocity,
+      amountVelocity,
       locationAnomaly,
-      deviceFingerprintRisk: normalizedDeviceFingerprintRisk,
-      userBehaviorScore: normalizedUserBehaviorScore,
-      merchantCategoryRisk: normalizedMerchantCategoryRisk,
-      transactionPatternRisk: normalizedTransactionPatternRisk,
+      deviceFingerprintRisk,
+      userBehaviorScore,
+      merchantCategoryRisk,
+      transactionPatternRisk,
       raw: {
         amount,
         deviceAge,
@@ -246,48 +260,45 @@ async function extractMLFeatures(
         hour,
         day,
         userTransactionCount,
-        userTotalSpent: userTotalSpent._sum.amount || 0,
+        userTotalSpent: Number(userTotalSpent._sum.amount) || 0,
         deviceTransactionCount: deviceTransactions,
-        merchantTransactionCount: 0, // Would need to calculate
+        merchantTransactionCount: 0, // Placeholder
       },
     };
   } catch (error) {
-    console.error('Error extracting ML features:', error);
+    console.error('Error extracting features:', error);
     return getDefaultFeatures(amount);
   }
 }
 
-// Calculate pattern-based risk
+// Calculate pattern risk based on transaction history
 function calculatePatternRisk(transactions: any[], currentAmount: number): number {
-  if (transactions.length < 3) return 0.5;
+  if (transactions.length === 0) {
+    return 0.5; // Default risk
+  }
 
-  // Check for unusual patterns
   const amounts = transactions.map(tx => Number(tx.amount));
   const avgAmount = amounts.reduce((sum, amt) => sum + amt, 0) / amounts.length;
   const stdDev = Math.sqrt(
     amounts.reduce((sum, amt) => sum + Math.pow(amt - avgAmount, 2), 0) / amounts.length
   );
 
-  // Z-score for current amount
-  const zScore = Math.abs((currentAmount - avgAmount) / stdDev);
-  
-  // High z-score indicates unusual amount
-  if (zScore > 2) return 0.8;
-  if (zScore > 1.5) return 0.6;
-  return 0.3;
+  // Higher risk if current amount deviates significantly from user's pattern
+  const deviation = Math.abs(currentAmount - avgAmount) / (stdDev || 1);
+  return Math.min(deviation / 3, 1); // Normalize to 0-1
 }
 
-// Get default features for error cases
+// Get default features when extraction fails
 function getDefaultFeatures(amount: number): MLFeatures {
   return {
     normalizedAmount: Math.min(amount / 10000, 1),
-    normalizedDeviceAge: 0,
+    normalizedDeviceAge: 0.5,
     normalizedMerchantRisk: 0.5,
-    normalizedFrequency: 0,
-    normalizedAvgAmount: 0,
+    normalizedFrequency: 0.5,
+    normalizedAvgAmount: 0.5,
     timeOfDay: 0.5,
     dayOfWeek: 0.5,
-    amountVelocity: 0,
+    amountVelocity: 0.5,
     locationAnomaly: 0.1,
     deviceFingerprintRisk: 0.5,
     userBehaviorScore: 0.5,
@@ -295,16 +306,16 @@ function getDefaultFeatures(amount: number): MLFeatures {
     transactionPatternRisk: 0.5,
     raw: {
       amount,
-      deviceAge: 0,
+      deviceAge: 12,
       merchantRisk: 50,
-      recentTransactions: 0,
-      avgUserAmount: 0,
+      recentTransactions: 1,
+      avgUserAmount: amount,
       hour: 12,
-      day: 0,
-      userTransactionCount: 0,
-      userTotalSpent: 0,
-      deviceTransactionCount: 0,
-      merchantTransactionCount: 0,
+      day: 1,
+      userTransactionCount: 1,
+      userTotalSpent: amount,
+      deviceTransactionCount: 1,
+      merchantTransactionCount: 1,
     },
   };
 }
@@ -328,7 +339,7 @@ function featuresToMLInput(features: MLFeatures): number[] {
   ];
 }
 
-// Enhanced risk analysis with ML
+// Main ML risk analysis function
 export async function analyzeTransactionRiskML(
   transactionId: string,
   userId: string,
@@ -344,60 +355,64 @@ export async function analyzeTransactionRiskML(
     const features = await extractMLFeatures(transactionId, userId, deviceId, merchantId, amount);
 
     // Get ML prediction
-    const mlInput = featuresToMLInput(features);
-    const mlPrediction = riskModel?.predict(mlInput) || 0.5;
+    let mlPrediction = 0.5; // Default
+    let mlConfidence = 0.5; // Default confidence
+
+    if (riskModel) {
+      const mlInput = featuresToMLInput(features);
+      mlPrediction = riskModel.predict(mlInput);
+      mlConfidence = calculateMLConfidence(features);
+    }
 
     // Combine ML prediction with rule-based scoring
     const ruleBasedScore = calculateRuleBasedScore(features);
-    const mlConfidence = calculateMLConfidence(features);
-    
-    // Weighted combination (ML gets higher weight if confident)
-    const finalScore = (mlPrediction * mlConfidence + ruleBasedScore * (1 - mlConfidence)) * 100;
+    const combinedScore = (mlPrediction * 0.7) + (ruleBasedScore * 0.3);
+
+    // Convert to 0-100 scale
+    const riskScore = Math.round(combinedScore * 100);
 
     // Generate risk reasons
     const reasons = generateRiskReasons(features, mlPrediction);
 
     // Save training data for future model updates
-    await saveTrainingData(features, mlPrediction > 0.7 ? 1 : 0);
+    await saveTrainingData(features, riskScore);
 
     return {
-      riskScore: Math.round(finalScore),
+      riskScore,
       features,
       reasons,
-      mlConfidence: Math.round(mlConfidence * 100),
+      mlConfidence,
     };
   } catch (error) {
     console.error('Error in ML risk analysis:', error);
+    // Return default risk assessment
+    const features = getDefaultFeatures(amount);
     return {
       riskScore: 50,
-      features: getDefaultFeatures(amount),
-      reasons: ['ML analysis failed - using fallback'],
-      mlConfidence: 0,
+      features,
+      reasons: ['Analysis failed - using default risk'],
+      mlConfidence: 0.1,
     };
   }
 }
 
-// Rule-based scoring as fallback
+// Calculate rule-based risk score
 function calculateRuleBasedScore(features: MLFeatures): number {
-  const weights = {
-    amount: 0.25,
-    deviceAge: 0.15,
-    merchantRisk: 0.30,
-    frequency: 0.20,
-    avgAmount: 0.10,
-  };
+  let score = 0.5; // Base score
 
-  let score = 
-    features.normalizedAmount * weights.amount +
-    features.normalizedDeviceAge * weights.deviceAge +
-    features.normalizedMerchantRisk * weights.merchantRisk +
-    features.normalizedFrequency * weights.frequency +
-    features.normalizedAvgAmount * weights.avgAmount;
+  // Amount-based rules
+  if (features.normalizedAmount > 0.8) score += 0.2;
+  if (features.amountVelocity > 0.5) score += 0.1;
 
-  // Apply risk multipliers
-  if (features.deviceFingerprintRisk > 0.7) score *= 1.3;
-  if (features.userBehaviorScore > 0.7) score *= 1.2;
-  if (features.transactionPatternRisk > 0.7) score *= 1.4;
+  // Device-based rules
+  if (features.deviceFingerprintRisk > 0.7) score += 0.15;
+  if (features.normalizedDeviceAge > 0.8) score += 0.1;
+
+  // Frequency-based rules
+  if (features.normalizedFrequency > 0.7) score += 0.15;
+
+  // Time-based rules
+  if (features.timeOfDay < 0.2 || features.timeOfDay > 0.8) score += 0.1; // Off-hours
 
   return Math.min(score, 1);
 }
@@ -406,55 +421,50 @@ function calculateRuleBasedScore(features: MLFeatures): number {
 function calculateMLConfidence(features: MLFeatures): number {
   let confidence = 0.5; // Base confidence
 
-  // Higher confidence if we have good user history
-  if (features.raw.userTransactionCount > 20) confidence += 0.2;
-  if (features.raw.deviceTransactionCount > 10) confidence += 0.1;
-  if (features.raw.userTransactionCount > 50) confidence += 0.1;
+  // Higher confidence with more data
+  if (features.raw.userTransactionCount > 10) confidence += 0.2;
+  if (features.raw.deviceTransactionCount > 5) confidence += 0.1;
 
-  // Lower confidence for new users/devices
-  if (features.raw.userTransactionCount < 5) confidence -= 0.2;
-  if (features.raw.deviceTransactionCount < 3) confidence -= 0.1;
+  // Lower confidence with anomalies
+  if (features.amountVelocity > 0.5) confidence -= 0.1;
+  if (features.deviceFingerprintRisk > 0.7) confidence -= 0.1;
 
-  return Math.max(0.1, Math.min(1, confidence));
+  return Math.max(0.1, Math.min(confidence, 1));
 }
 
-// Generate risk reasons
+// Generate human-readable risk reasons
 function generateRiskReasons(features: MLFeatures, mlPrediction: number): string[] {
   const reasons: string[] = [];
 
-  if (features.raw.merchantRisk > 80) {
-    reasons.push(`High-risk merchant (${features.raw.merchantRisk}%)`);
-  }
-
-  if (features.raw.recentTransactions > 5) {
-    reasons.push(`High transaction frequency (${features.raw.recentTransactions} in 5 min)`);
-  }
-
-  if (features.raw.deviceAge < 1) {
-    reasons.push(`New device (${features.raw.deviceAge} hours old)`);
+  if (features.normalizedAmount > 0.8) {
+    reasons.push('High transaction amount');
   }
 
   if (features.deviceFingerprintRisk > 0.7) {
-    reasons.push('Suspicious device fingerprint');
+    reasons.push('New or suspicious device');
   }
 
-  if (features.userBehaviorScore > 0.7) {
-    reasons.push('Unusual user behavior pattern');
+  if (features.normalizedFrequency > 0.7) {
+    reasons.push('Unusual transaction frequency');
   }
 
-  if (features.transactionPatternRisk > 0.7) {
-    reasons.push('Unusual transaction pattern detected');
+  if (features.amountVelocity > 0.5) {
+    reasons.push('Rapid change in transaction amounts');
   }
 
-  if (mlPrediction > 0.8) {
-    reasons.push('ML model indicates high fraud probability');
+  if (features.normalizedMerchantRisk > 0.8) {
+    reasons.push('High-risk merchant');
   }
 
-  if (features.normalizedAmount > 0.8) {
-    reasons.push(`High transaction amount ($${features.raw.amount})`);
+  if (features.timeOfDay < 0.2 || features.timeOfDay > 0.8) {
+    reasons.push('Transaction during off-hours');
   }
 
-  return reasons;
+  if (mlPrediction > 0.7) {
+    reasons.push('ML model indicates high risk');
+  }
+
+  return reasons.length > 0 ? reasons : ['Low risk transaction'];
 }
 
 // Save training data for model updates
@@ -462,9 +472,19 @@ async function saveTrainingData(features: MLFeatures, label: number): Promise<vo
   try {
     await prisma.training_data.create({
       data: {
-        features: featuresToMLInput(features),
-        label,
-        created_at: new Date(),
+        features: {
+          amount: features.raw.amount,
+          device_age: features.raw.deviceAge,
+          merchant_risk: features.raw.merchantRisk,
+          transaction_frequency: features.raw.recentTransactions,
+          avg_user_amount: features.raw.avgUserAmount,
+          normalized_amount: features.normalizedAmount,
+          normalized_device_age: features.normalizedDeviceAge,
+          normalized_merchant_risk: features.normalizedMerchantRisk,
+          normalized_frequency: features.normalizedFrequency,
+          normalized_avg_amount: features.normalizedAvgAmount,
+        },
+        label: label >= 75 ? 1 : 0, // 1 for high risk, 0 for low risk
       },
     });
   } catch (error) {
@@ -472,56 +492,76 @@ async function saveTrainingData(features: MLFeatures, label: number): Promise<vo
   }
 }
 
-// Train model with accumulated data
+// Train the model with collected data
 export async function trainModel(): Promise<void> {
   try {
-    await initializeModel();
-    if (!riskModel) return;
+    console.log('Training polynomial regression model...');
 
-    // Get training data
+    // Get training data from database
     const trainingData = await prisma.training_data.findMany({
+      take: 1000, // Limit to recent data
       orderBy: { created_at: 'desc' },
-      take: 1000, // Use last 1000 samples
     });
 
-    if (trainingData.length < 100) {
-      console.log('Insufficient training data, need at least 100 samples');
+    if (trainingData.length < 10) {
+      console.log('Insufficient training data, skipping training');
       return;
     }
 
-    const features = trainingData.map(td => td.features as number[]);
-    const labels = trainingData.map(td => td.label);
+    // Prepare features and labels
+    const features: number[][] = [];
+    const labels: number[] = [];
 
-    // Train model
-    riskModel.train(features, labels);
+    for (const data of trainingData) {
+      const featureData = data.features as any;
+      const featureVector = [
+        featureData.normalized_amount || 0,
+        featureData.normalized_device_age || 0,
+        featureData.normalized_merchant_risk || 0,
+        featureData.normalized_frequency || 0,
+        featureData.normalized_avg_amount || 0,
+      ];
+      features.push(featureVector);
+      labels.push(data.label * 100); // Convert back to 0-100 scale
+    }
 
-    // Save updated model
-    const modelData = riskModel.save();
-    await prisma.ml_models.create({
-      data: {
-        model_type: 'risk_analyzer',
-        model_data: modelData,
-        version: '1.0',
-        accuracy: calculateModelAccuracy(features, labels),
-        created_at: new Date(),
-      },
-    });
+    // Initialize and train model
+    await initializeModel();
+    if (riskModel) {
+      riskModel.train(features, labels);
 
-    console.log(`Model trained successfully with ${trainingData.length} samples`);
+      // Save trained model
+      const modelData = riskModel.save();
+      if (modelData) {
+        await prisma.ml_models.create({
+          data: {
+            model_type: 'risk_analyzer',
+            model_data: modelData,
+            version: '1.0.0',
+            accuracy: calculateModelAccuracy(features, labels),
+          },
+        });
+        console.log('Polynomial regression model trained and saved');
+      }
+    }
   } catch (error) {
     console.error('Error training model:', error);
   }
 }
 
-// Calculate model accuracy
+// Calculate model accuracy (simplified)
 function calculateModelAccuracy(features: number[][], labels: number[]): number {
-  if (!riskModel || features.length === 0) return 0;
+  if (!riskModel || features.length === 0) {
+    return 0.5;
+  }
 
   let correct = 0;
   for (let i = 0; i < features.length; i++) {
     const prediction = riskModel.predict(features[i]);
-    const predictedLabel = prediction > 0.5 ? 1 : 0;
-    if (predictedLabel === labels[i]) correct++;
+    const actual = labels[i] / 100; // Normalize to 0-1
+    if (Math.abs(prediction - actual) < 0.2) { // Within 20% tolerance
+      correct++;
+    }
   }
 
   return correct / features.length;
@@ -535,19 +575,19 @@ export async function getModelStats(): Promise<{
   trainingSamples: number;
 }> {
   try {
-    const latestModel = await prisma.ml_models.findFirst({
+    const lastModel = await prisma.ml_models.findFirst({
       where: { model_type: 'risk_analyzer' },
       orderBy: { created_at: 'desc' },
     });
 
     const trainingSamples = await prisma.training_data.count();
 
-    return {
-      isTrained: !!latestModel,
-      lastTrained: latestModel?.created_at || null,
-      accuracy: latestModel?.accuracy || null,
-      trainingSamples,
-    };
+          return {
+        isTrained: riskModel ? true : false, // Simplified check
+        lastTrained: lastModel?.created_at || null,
+        accuracy: lastModel?.accuracy || null,
+        trainingSamples,
+      };
   } catch (error) {
     console.error('Error getting model stats:', error);
     return {
