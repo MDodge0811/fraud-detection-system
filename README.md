@@ -13,7 +13,7 @@ A comprehensive, real-time fraud detection system with ML-based risk scoring, bu
 ### 📊 **Interactive Dashboard**
 - **Real-Time Charts**: Transaction volume, risk distribution, and alert trends
 - **Live Statistics**: Dynamic counters for transactions, alerts, and risk metrics
-- **Responsive Design**: Modern UI built with Tailwind CSS
+- **Responsive Design**: Modern UI built with styled-components
 - **Connection Status**: Visual indicator for WebSocket connection health
 
 ### 🧠 **Machine Learning Features**
@@ -85,7 +85,7 @@ fraud-detection-system/
 │   │   └── migrations/        # Database migrations
 │   ├── services/              # Business logic
 │   │   ├── transactionSimulator.ts  # Transaction simulation
-│   │   ├── riskAnalyzer.ts    # ML risk analysis
+│   │   ├── mlRiskAnalyzer.ts  # ML risk analysis
 │   │   └── index.ts           # Service exports
 │   ├── tests/                 # Integration tests
 │   ├── index.ts               # Express server + WebSocket
@@ -164,7 +164,7 @@ npm run docker:down    # Stop test database
 ### Key Libraries
 - **React 19**: Latest React features
 - **Vite**: Fast development server
-- **Tailwind CSS**: Utility-first styling
+- **styled-components**: CSS-in-JS styling
 - **Chart.js**: Data visualization
 - **Socket.IO Client**: Real-time communication
 
@@ -193,14 +193,13 @@ This project uses a hybrid deployment approach for optimal performance:
 - **Deployment**: Automated via GitHub Actions
 - **Benefits**: Fast static hosting, global CDN, automatic previews
 
-#### Backend (Railway)
-- **Platform**: Railway
-- **Deployment**: Automated from GitHub
+#### Backend (Manual Deployment)
+- **Platform**: Railway, Heroku, or any Node.js hosting
+- **Deployment**: Manual deployment process
 - **Benefits**: Full WebSocket support, PostgreSQL database, real-time logs
-- **URL**: `https://fraud-detection-system-production.up.railway.app`
 
-#### Database (Railway PostgreSQL)
-- **Platform**: Railway PostgreSQL
+#### Database (Managed PostgreSQL)
+- **Platform**: Railway PostgreSQL, Supabase, or similar
 - **Benefits**: Managed database with automatic backups
 
 ### 🔄 CI/CD Pipeline
@@ -208,25 +207,27 @@ This project uses a hybrid deployment approach for optimal performance:
 #### Automated Workflows
 - **Frontend CI/CD**: Testing, linting, and deployment to Vercel
 - **Preview Deployments**: Automatic preview URLs for pull requests
-- **Production Deployments**: Automatic deployment on main branch
+- **Production Deployments**: Automatic frontend deployment on main branch
+- **Backend Testing**: Automated backend tests and security scans
+- **Database Management**: Automated database migrations and seeding
 
 #### Quick Setup
 1. **Fork this repository** to your GitHub account
-2. **Deploy backend to Railway** (see [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md))
+2. **Deploy backend manually** to your preferred platform
 3. **Set up Vercel frontend** with environment variables
-4. **Deploy automatically** on every push to main branch
+4. **Deploy frontend automatically** on every push to main branch
 
 #### Environment Variables
 
 **Frontend (Vercel):**
 ```bash
-VITE_API_URL=https://fraud-detection-system-production.up.railway.app/api
-VITE_WS_URL=https://fraud-detection-system-production.up.railway.app
+VITE_API_URL=https://your-backend-url.com/api
+VITE_WS_URL=https://your-backend-url.com
 ```
 
-**Backend (Railway):**
+**Backend:**
 ```bash
-DATABASE_URL=your_railway_postgres_url
+DATABASE_URL=your_postgres_url
 NODE_ENV=production
 ```
 
@@ -238,7 +239,6 @@ VERCEL_PROJECT_ID_FRONTEND=your_frontend_project_id
 ```
 
 For detailed setup instructions, see:
-- [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md) - Backend deployment guide
 - [GITHUB_ACTIONS.md](./GITHUB_ACTIONS.md) - CI/CD documentation
 - [DEPLOYMENT.md](./DEPLOYMENT.md) - Vercel deployment guide
 
@@ -303,7 +303,7 @@ VITE_API_URL="http://localhost:3000"
 - [Prisma Documentation](https://www.prisma.io/docs)
 - [Socket.IO Documentation](https://socket.io/docs)
 - [Chart.js Documentation](https://www.chartjs.org/docs)
-- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+- [styled-components Documentation](https://styled-components.com/docs)
 
 ### API Documentation
 - **Swagger/OpenAPI**: Available at `/api-docs` (when implemented)
