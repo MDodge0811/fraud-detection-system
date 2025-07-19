@@ -4,7 +4,7 @@ import { analyzeTransactionRisk, getSimulationStatus } from '../services';
 import mlRouter from './ml';
 
 const router = express.Router();
-// triggering a build
+
 // Health check endpoint
 router.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -13,8 +13,18 @@ router.get('/health', (req, res) => {
 // Alerts endpoint - GET alerts with optional limit
 router.get('/alerts', async (req, res) => {
   try {
+    // Input validation
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
     const allTime = req.query.allTime === 'true';
+
+    // Validate limit parameter
+    if (req.query.limit && (isNaN(limit) || limit < 1 || limit > 1000)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid limit parameter. Must be between 1 and 1000.',
+        code: 'INVALID_LIMIT',
+      });
+    }
 
     const alerts = await prisma.alerts.findMany({
       orderBy: { created_at: 'desc' },
@@ -33,14 +43,28 @@ router.get('/alerts', async (req, res) => {
     res.json({
       success: true,
       data: alerts,
-      count: alerts.length,
+      pagination: {
+        count: alerts.length,
+        limit: allTime ? 'all' : limit,
+        hasMore: allTime ? false : alerts.length === limit,
+      },
     });
   } catch (error) {
     console.error('Error fetching alerts:', error);
+
+    // Check if it's a database connection issue
+    if (error instanceof Error && error.message.includes('database')) {
+      return res.status(503).json({
+        success: false,
+        error: 'Alerts service temporarily unavailable',
+        code: 'SERVICE_UNAVAILABLE',
+      });
+    }
+
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch alerts',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Internal server error while fetching alerts',
+      code: 'INTERNAL_ERROR',
     });
   }
 });
@@ -48,8 +72,18 @@ router.get('/alerts', async (req, res) => {
 // Transactions endpoint - GET transactions with optional limit
 router.get('/transactions', async (req, res) => {
   try {
+    // Input validation
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;
     const allTime = req.query.allTime === 'true';
+
+    // Validate limit parameter
+    if (req.query.limit && (isNaN(limit) || limit < 1 || limit > 1000)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid limit parameter. Must be between 1 and 1000.',
+        code: 'INVALID_LIMIT',
+      });
+    }
 
     const transactions = await prisma.transactions.findMany({
       orderBy: { timestamp: 'desc' },
@@ -66,14 +100,28 @@ router.get('/transactions', async (req, res) => {
     res.json({
       success: true,
       data: transactions,
-      count: transactions.length,
+      pagination: {
+        count: transactions.length,
+        limit: allTime ? 'all' : limit,
+        hasMore: allTime ? false : transactions.length === limit,
+      },
     });
   } catch (error) {
     console.error('Error fetching transactions:', error);
+
+    // Check if it's a database connection issue
+    if (error instanceof Error && error.message.includes('database')) {
+      return res.status(503).json({
+        success: false,
+        error: 'Transactions service temporarily unavailable',
+        code: 'SERVICE_UNAVAILABLE',
+      });
+    }
+
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch transactions',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Internal server error while fetching transactions',
+      code: 'INTERNAL_ERROR',
     });
   }
 });
@@ -81,9 +129,21 @@ router.get('/transactions', async (req, res) => {
 // Risk signals endpoint - GET recent risk signals
 router.get('/risk-signals', async (req, res) => {
   try {
+    // Input validation
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;
+
+    // Validate limit parameter
+    if (req.query.limit && (isNaN(limit) || limit < 1 || limit > 1000)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid limit parameter. Must be between 1 and 1000.',
+        code: 'INVALID_LIMIT',
+      });
+    }
+
     const riskSignals = await prisma.risk_signals.findMany({
       orderBy: { created_at: 'desc' },
-      take: 100,
+      take: limit,
       include: {
         transactions: {
           include: {
@@ -97,14 +157,28 @@ router.get('/risk-signals', async (req, res) => {
     res.json({
       success: true,
       data: riskSignals,
-      count: riskSignals.length,
+      pagination: {
+        count: riskSignals.length,
+        limit,
+        hasMore: riskSignals.length === limit,
+      },
     });
   } catch (error) {
     console.error('Error fetching risk signals:', error);
+
+    // Check if it's a database connection issue
+    if (error instanceof Error && error.message.includes('database')) {
+      return res.status(503).json({
+        success: false,
+        error: 'Risk signals service temporarily unavailable',
+        code: 'SERVICE_UNAVAILABLE',
+      });
+    }
+
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch risk signals',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Internal server error while fetching risk signals',
+      code: 'INTERNAL_ERROR',
     });
   }
 });
@@ -136,10 +210,20 @@ router.get('/dashboard/stats', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
+
+    // Check if it's a database connection issue
+    if (error instanceof Error && error.message.includes('database')) {
+      return res.status(503).json({
+        success: false,
+        error: 'Dashboard service temporarily unavailable',
+        code: 'SERVICE_UNAVAILABLE',
+      });
+    }
+
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch dashboard stats',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Internal server error while fetching dashboard stats',
+      code: 'INTERNAL_ERROR',
     });
   }
 });
@@ -158,10 +242,20 @@ router.get('/simulation/status', (req, res) => {
     });
   } catch (error) {
     console.error('Error getting simulation status:', error);
+
+    // Check if it's a service unavailable issue
+    if (error instanceof Error && error.message.includes('simulation')) {
+      return res.status(503).json({
+        success: false,
+        error: 'Simulation service temporarily unavailable',
+        code: 'SERVICE_UNAVAILABLE',
+      });
+    }
+
     res.status(500).json({
       success: false,
-      error: 'Failed to get simulation status',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Internal server error while getting simulation status',
+      code: 'INTERNAL_ERROR',
     });
   }
 });
@@ -170,6 +264,15 @@ router.get('/simulation/status', (req, res) => {
 router.get('/risk-analysis/:transactionId', async (req, res) => {
   try {
     const { transactionId } = req.params;
+
+    // Input validation
+    if (!transactionId || typeof transactionId !== 'string' || transactionId.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid transaction ID provided',
+        code: 'INVALID_TRANSACTION_ID',
+      });
+    }
 
     // Get transaction details
     const transaction = await prisma.transactions.findUnique({
@@ -185,6 +288,7 @@ router.get('/risk-analysis/:transactionId', async (req, res) => {
       return res.status(404).json({
         success: false,
         error: 'Transaction not found',
+        code: 'TRANSACTION_NOT_FOUND',
       });
     }
 
@@ -206,10 +310,29 @@ router.get('/risk-analysis/:transactionId', async (req, res) => {
     });
   } catch (error) {
     console.error('Error analyzing transaction risk:', error);
+
+    // Check if it's a risk analysis service issue
+    if (error instanceof Error && error.message.includes('risk analysis')) {
+      return res.status(503).json({
+        success: false,
+        error: 'Risk analysis service temporarily unavailable',
+        code: 'SERVICE_UNAVAILABLE',
+      });
+    }
+
+    // Check if it's a database connection issue
+    if (error instanceof Error && error.message.includes('database')) {
+      return res.status(503).json({
+        success: false,
+        error: 'Transaction service temporarily unavailable',
+        code: 'SERVICE_UNAVAILABLE',
+      });
+    }
+
     res.status(500).json({
       success: false,
-      error: 'Failed to analyze transaction risk',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      error: 'Internal server error while analyzing transaction risk',
+      code: 'INTERNAL_ERROR',
     });
   }
 });

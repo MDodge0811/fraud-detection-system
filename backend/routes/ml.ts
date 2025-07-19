@@ -13,9 +13,30 @@ router.get('/stats', async (req, res) => {
     });
   } catch (error) {
     console.error('Error getting ML model stats:', error);
+
+    // Check if it's a "no model found" scenario
+    if (error instanceof Error && error.message.includes('No existing model')) {
+      return res.status(404).json({
+        success: false,
+        error: 'No ML model found. Please train a model first.',
+        code: 'MODEL_NOT_FOUND',
+      });
+    }
+
+    // Check if it's a database connection issue
+    if (error instanceof Error && error.message.includes('database')) {
+      return res.status(503).json({
+        success: false,
+        error: 'ML service temporarily unavailable',
+        code: 'SERVICE_UNAVAILABLE',
+      });
+    }
+
+    // Default to 500 for unexpected errors
     res.status(500).json({
       success: false,
-      error: 'Failed to get ML model statistics',
+      error: 'Internal server error while retrieving ML model statistics',
+      code: 'INTERNAL_ERROR',
     });
   }
 });
@@ -25,17 +46,47 @@ router.post('/train', async (req, res) => {
   try {
     await trainModel();
     const stats = await getModelStats();
-    
-    res.json({
+
+    res.status(201).json({
       success: true,
       message: 'Model training completed successfully',
       data: stats,
     });
   } catch (error) {
     console.error('Error training ML model:', error);
+
+    // Check if it's a training data issue
+    if (error instanceof Error && error.message.includes('insufficient data')) {
+      return res.status(422).json({
+        success: false,
+        error: 'Insufficient training data. Need more samples to train the model.',
+        code: 'INSUFFICIENT_DATA',
+      });
+    }
+
+    // Check if it's a database connection issue
+    if (error instanceof Error && error.message.includes('database')) {
+      return res.status(503).json({
+        success: false,
+        error: 'ML service temporarily unavailable',
+        code: 'SERVICE_UNAVAILABLE',
+      });
+    }
+
+    // Check if it's a model validation error
+    if (error instanceof Error && error.message.includes('validation')) {
+      return res.status(422).json({
+        success: false,
+        error: 'Model validation failed',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    // Default to 500 for unexpected errors
     res.status(500).json({
       success: false,
-      error: 'Failed to train ML model',
+      error: 'Internal server error during model training',
+      code: 'INTERNAL_ERROR',
     });
   }
 });
@@ -44,7 +95,7 @@ router.post('/train', async (req, res) => {
 router.get('/training-data', async (req, res) => {
   try {
     const { prisma } = await import('../prisma/client');
-    
+
     const totalSamples = await prisma.training_data.count();
     const recentSamples = await prisma.training_data.count({
       where: {
@@ -74,9 +125,21 @@ router.get('/training-data', async (req, res) => {
     });
   } catch (error) {
     console.error('Error getting training data stats:', error);
+
+    // Check if it's a database connection issue
+    if (error instanceof Error && error.message.includes('database')) {
+      return res.status(503).json({
+        success: false,
+        error: 'Training data service temporarily unavailable',
+        code: 'SERVICE_UNAVAILABLE',
+      });
+    }
+
+    // Default to 500 for unexpected errors
     res.status(500).json({
       success: false,
-      error: 'Failed to get training data statistics',
+      error: 'Internal server error while retrieving training data statistics',
+      code: 'INTERNAL_ERROR',
     });
   }
 });
