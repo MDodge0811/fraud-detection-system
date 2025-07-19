@@ -3,4 +3,4 @@ export { analyzeTransactionRiskML, trainModel, getModelStats } from './mlRiskAna
 // It began as the primary risk analyzer, but was later replaced by the mlRiskAnalyzer.ts file.
 // It was left is as a check for the regression model and to generate the training data.
 export { analyzeTransactionRisk, getRiskLevel, getRiskColor } from './basicRiskAnalyzer';
-export { getSimulationStatus } from './transactionSimulator';
+export { simulateTransaction, startTransactionSimulation, stopTransactionSimulation, getSimulationStatus } from './transactionSimulator';
