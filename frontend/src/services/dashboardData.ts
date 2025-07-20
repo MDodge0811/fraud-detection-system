@@ -185,8 +185,8 @@ class DashboardDataService {
   }> {
     const [stats, alerts, transactions] = await Promise.all([
       apiService.getDashboardStats(),
-      apiService.getAlerts(50, true), // Get all-time alerts for charts
-      apiService.getTransactions(100, true), // Get all-time transactions for charts
+      apiService.getAlerts(50, 'all'), // Get all-time alerts for charts
+      apiService.getTransactions(100, 'all'), // Get all-time transactions for charts
     ]);
 
     return { stats, alerts, transactions };

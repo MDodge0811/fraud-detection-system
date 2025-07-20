@@ -398,17 +398,26 @@ router.get('/dashboard/risk-distribution', async (req, res) => {
                       timeframe === '24h' ? '24 hours' : 
                       timeframe === '7d' ? '7 days' : '30 days';
       query = `
+        WITH timeframe_signals AS (
+          SELECT CAST(COUNT(*) AS INTEGER) as total_count
+          FROM risk_signals rs2 
+          WHERE rs2.created_at >= NOW() - INTERVAL '${interval}'
+        )
         SELECT 
           CASE 
             WHEN rs.risk_score < 30 THEN 'low'
             WHEN rs.risk_score < 70 THEN 'medium'
             ELSE 'high'
           END as risk_level,
-          COUNT(*) as count,
-          ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM risk_signals rs2 WHERE rs2.created_at >= NOW() - INTERVAL '${interval}'), 2) as percentage
+          CAST(COUNT(*) AS INTEGER) as count,
+          CASE 
+            WHEN tf.total_count > 0 THEN ROUND(COUNT(*) * 100.0 / tf.total_count, 2)
+            ELSE 0
+          END as percentage
         FROM risk_signals rs
+        CROSS JOIN timeframe_signals tf
         WHERE rs.created_at >= NOW() - INTERVAL '${interval}'
-        GROUP BY risk_level
+        GROUP BY risk_level, tf.total_count
         ORDER BY count DESC
       `;
     }

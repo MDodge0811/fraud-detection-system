@@ -1,8 +1,16 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { type DashboardStats } from '@/services/api';
-import { type Alert, type Transaction } from '@/services/websocket';
-import dashboardDataService, { type ChartData } from '@/services/dashboardData';
+import apiService, {
+  type DashboardStats,
+  type AlertTrendsData,
+  type RiskDistributionData,
+  type TransactionVolumeData,
+  type RecentActivityData,
+} from '@/services/api';
+import { type Alert } from '@/services/websocket';
+import { type ChartData } from '@/services/dashboardData';
+
+export type Timeframe = '1h' | '6h' | '12h' | '24h' | '7d' | '30d' | 'all';
 
 interface DashboardState {
   // Connection state
@@ -12,6 +20,15 @@ interface DashboardState {
   stats: DashboardStats | null;
   recentAlerts: Alert[];
   loading: boolean;
+
+  // Timeframe state
+  timeframe: Timeframe;
+
+  // Chart data state
+  alertTrends: AlertTrendsData[];
+  riskDistribution: RiskDistributionData[];
+  transactionVolume: TransactionVolumeData[];
+  recentActivity: RecentActivityData[];
 
   // Pagination state
   alertsPage: number;
@@ -23,28 +40,31 @@ interface DashboardState {
   setRecentAlerts: (alerts: Alert[]) => void;
   addAlert: (alert: Alert) => void;
   setLoading: (loading: boolean) => void;
+  setTimeframe: (timeframe: Timeframe) => void;
+
+  // Chart data actions
+  setAlertTrends: (data: AlertTrendsData[]) => void;
+  setRiskDistribution: (data: RiskDistributionData[]) => void;
+  setTransactionVolume: (data: TransactionVolumeData[]) => void;
+  setRecentActivity: (data: RecentActivityData[]) => void;
 
   // Pagination actions
   setAlertsPage: (page: number) => void;
   nextAlertsPage: () => void;
   prevAlertsPage: () => void;
 
-  // Chart data actions
-  initializeChartData: (transactions: Transaction[], alerts: Alert[]) => void;
-  updateTransactionData: (transaction: Transaction) => void;
-  updateAlertData: (alert: Alert) => void;
-
   // Chart data getters
-  getTransactionVolumeData: () => ChartData;
-  getRiskDistributionData: () => ChartData;
-  getAlertTrendsData: () => ChartData;
+  getTransactionVolumeChartData: () => ChartData;
+  getRiskDistributionChartData: () => ChartData;
+  getAlertTrendsChartData: () => ChartData;
 
   // Pagination getters
   getPaginatedAlerts: () => Alert[];
   getAlertsPageInfo: () => { currentPage: number; totalPages: number; totalAlerts: number };
 
   // Data fetching
-  fetchDashboardData: () => Promise<void>;
+  fetchDashboardData: (timeframe?: Timeframe) => Promise<void>;
+  fetchChartData: (timeframe?: Timeframe) => Promise<void>;
 }
 
 export const useDashboardStore = create<DashboardState>()(
@@ -55,6 +75,15 @@ export const useDashboardStore = create<DashboardState>()(
       stats: null,
       recentAlerts: [],
       loading: true,
+
+      // Timeframe state
+      timeframe: '24h' as Timeframe,
+
+      // Chart data state
+      alertTrends: [],
+      riskDistribution: [],
+      transactionVolume: [],
+      recentActivity: [],
 
       // Pagination state
       alertsPage: 1,
@@ -84,6 +113,27 @@ export const useDashboardStore = create<DashboardState>()(
         set({ loading });
       },
 
+      setTimeframe: (timeframe) => {
+        set({ timeframe });
+      },
+
+      // Chart data actions
+      setAlertTrends: (data) => {
+        set({ alertTrends: data });
+      },
+
+      setRiskDistribution: (data) => {
+        set({ riskDistribution: data });
+      },
+
+      setTransactionVolume: (data) => {
+        set({ transactionVolume: data });
+      },
+
+      setRecentActivity: (data) => {
+        set({ recentActivity: data });
+      },
+
       // Pagination actions
       setAlertsPage: (page) => {
         set({ alertsPage: page });
@@ -104,30 +154,91 @@ export const useDashboardStore = create<DashboardState>()(
         }
       },
 
-      // Chart data actions
-      initializeChartData: (transactions, alerts) => {
-        dashboardDataService.initializeChartData(transactions, alerts);
-      },
-
-      updateTransactionData: (transaction) => {
-        dashboardDataService.updateTransactionData(transaction);
-      },
-
-      updateAlertData: (alert) => {
-        dashboardDataService.updateAlertData(alert);
-      },
-
       // Chart data getters
-      getTransactionVolumeData: () => {
-        return dashboardDataService.generateTransactionVolumeData();
+      getTransactionVolumeChartData: () => {
+        const state = get();
+        const labels = state.transactionVolume.map(item => {
+          const date = new Date(item.hour_bucket);
+          return date.toLocaleString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        });
+        
+        const data = state.transactionVolume.map(item => item.transaction_count);
+        
+        return {
+          labels,
+          datasets: [
+            {
+              label: 'Transactions per Hour',
+              data,
+              borderColor: 'rgb(59, 130, 246)',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              tension: 0.4,
+            },
+          ],
+        };
       },
 
-      getRiskDistributionData: () => {
-        return dashboardDataService.generateRiskDistributionData();
+      getRiskDistributionChartData: () => {
+        const state = get();
+        const labels = state.riskDistribution.map(item => 
+          `${item.risk_level.charAt(0).toUpperCase() + item.risk_level.slice(1)} Risk`
+        );
+        
+        const data = state.riskDistribution.map(item => item.count);
+        
+        return {
+          labels,
+          datasets: [
+            {
+              label: 'Risk Distribution',
+              data,
+              backgroundColor: [
+                'rgba(34, 197, 94, 0.8)',
+                'rgba(251, 191, 36, 0.8)',
+                'rgba(239, 68, 68, 0.8)',
+              ],
+              borderColor: [
+                'rgb(34, 197, 94)',
+                'rgb(251, 191, 36)',
+                'rgb(239, 68, 68)',
+              ],
+              borderWidth: 2,
+            },
+          ],
+        };
       },
 
-      getAlertTrendsData: () => {
-        return dashboardDataService.generateAlertTrendsData();
+      getAlertTrendsChartData: () => {
+        const state = get();
+        const labels = state.alertTrends.map(item => {
+          const date = new Date(item.hour_bucket);
+          return date.toLocaleString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        });
+        
+        const data = state.alertTrends.map(item => item.alert_count);
+        
+        return {
+          labels,
+          datasets: [
+            {
+              label: 'Alerts per Hour',
+              data,
+              backgroundColor: 'rgba(239, 68, 68, 0.8)',
+              borderColor: 'rgb(239, 68, 68)',
+              borderWidth: 1,
+            },
+          ],
+        };
       },
 
       // Pagination getters
@@ -150,21 +261,45 @@ export const useDashboardStore = create<DashboardState>()(
       },
 
       // Data fetching
-      fetchDashboardData: async () => {
+      fetchDashboardData: async (timeframe?: Timeframe) => {
         try {
           set({ loading: true });
-          const { stats, alerts, transactions } = await dashboardDataService.fetchDashboardData();
+          const tf = timeframe || get().timeframe;
+          
+          const [stats, alerts] = await Promise.all([
+            apiService.getDashboardStats(),
+            apiService.getAlerts(50, tf),
+          ]);
 
           set({
             stats,
             recentAlerts: alerts,
             loading: false,
           });
-
-          // Initialize chart data
-          dashboardDataService.initializeChartData(transactions, alerts);
         } catch {
           set({ loading: false });
+        }
+      },
+
+      fetchChartData: async (timeframe?: Timeframe) => {
+        try {
+          const tf = timeframe || get().timeframe;
+          
+          const [alertTrends, riskDistribution, transactionVolume, recentActivity] = await Promise.all([
+            apiService.getAlertTrends(tf, 100),
+            apiService.getRiskDistribution(tf),
+            apiService.getTransactionVolume(tf, 100),
+            apiService.getRecentActivity(50),
+          ]);
+
+          set({
+            alertTrends,
+            riskDistribution,
+            transactionVolume,
+            recentActivity,
+          });
+        } catch (error) {
+          console.error('Error fetching chart data:', error);
         }
       },
     }),
