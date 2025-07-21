@@ -22,10 +22,10 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: fraud-detection-backend
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/fraud_detection
       PORT: 3000
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key}

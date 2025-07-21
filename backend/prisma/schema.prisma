@@ -1,12 +1,13 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model alerts {
   alert_id       String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   transaction_id String?       @db.Uuid
@@ -63,25 +64,26 @@ model risk_signals {
 model training_data {
   data_id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   transaction_id String?       @db.Uuid
-  features       Json
   label          Int
   created_at     DateTime?     @default(now()) @db.Timestamp(6)
+  features       Json          @default("{}")
   transactions   transactions? @relation(fields: [transaction_id], references: [transaction_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([created_at], map: "idx_training_data_created_at")
 }
 
 model ml_models {
-  model_id    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  model_type  String    @db.VarChar(50)
-  model_data  Json
-  version     String    @db.VarChar(20)
-  accuracy    Float?
-  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  model_id   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  model_type String    @db.VarChar(50)
+  model_data Json
+  version    String    @db.VarChar(20)
+  accuracy   Float?
+  created_at DateTime? @default(now()) @db.Timestamp(6)
 
   @@index([model_type, created_at], map: "idx_ml_models_type_created")
 }
 
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model transactions {
   transaction_id String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   user_id        String?         @db.Uuid

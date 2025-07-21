@@ -1,5 +1,4 @@
 import { analyzeTransactionRiskML } from '../mlRiskAnalyzer';
-import { analyzeTransactionRisk } from '../basicRiskAnalyzer';
 import { SimulationConfig } from './config';
 import { TransactionGenerator } from './transactionGenerator';
 import { EventEmitter } from './eventEmitter';
@@ -53,15 +52,8 @@ export class TransactionSimulator {
       this.eventEmitter.emitTransactionNew(transaction);
 
       // Analyze transaction risk using both analyzers
-      const [mlRiskAnalysis, basicRiskAnalysis] = await Promise.all([
+      const [mlRiskAnalysis] = await Promise.all([
         analyzeTransactionRiskML(
-          transaction.transaction_id,
-          user.user_id,
-          device.device_id,
-          merchant.merchant_id,
-          finalAmount,
-        ),
-        analyzeTransactionRisk(
           transaction.transaction_id,
           user.user_id,
           device.device_id,
@@ -71,12 +63,12 @@ export class TransactionSimulator {
       ]);
 
       // Log both risk assessments
-      console.log(`💳 Transaction: $${finalAmount}`);
-      console.log(`   ML Risk: ${mlRiskAnalysis.riskScore}% (${this.getRiskLevel(mlRiskAnalysis.riskScore)})`);
-      console.log(`   Basic Risk: ${basicRiskAnalysis.riskScore}% (${this.getRiskLevel(basicRiskAnalysis.riskScore)})`);
-      console.log(`   ML Reasons: ${mlRiskAnalysis.reasons.join(', ')}`);
-      console.log(`   Basic Reasons: ${basicRiskAnalysis.reasons.join(', ')}`);
-      console.log('---');
+      // console.log(`💳 Transaction: $${finalAmount}`);
+      // console.log(`   ML Risk: ${mlRiskAnalysis.riskScore}% (${this.getRiskLevel(mlRiskAnalysis.riskScore)})`);
+      // console.log(`   Basic Risk: ${basicRiskAnalysis.riskScore}% (${this.getRiskLevel(basicRiskAnalysis.riskScore)})`);
+      // console.log(`   ML Reasons: ${mlRiskAnalysis.reasons.join(', ')}`);
+      // console.log(`   Basic Reasons: ${basicRiskAnalysis.reasons.join(', ')}`);
+      // console.log('---');
 
       // Use ML risk analysis for the rest of the process
       const riskAnalysis = mlRiskAnalysis;
@@ -110,24 +102,22 @@ export class TransactionSimulator {
 
       // Create alert if risk score is high
       if (riskAnalysis.riskScore >= SimulationConfig.RISK_THRESHOLDS.HIGH_RISK) {
-        const riskLevel = this.getRiskLevel(riskAnalysis.riskScore);
         const reasons = riskAnalysis.reasons.join(', ');
 
         const alert = await this.databaseService.createAlert(
           transaction.transaction_id,
           riskAnalysis.riskScore,
-          `${riskLevel} risk transaction: $${finalAmount} (${riskAnalysis.riskScore}%) - ${reasons}${notes ? ` - ${notes}` : ''}`,
+          `${this.getRiskLevel(riskAnalysis.riskScore)} risk transaction: $${finalAmount} (${riskAnalysis.riskScore}%) - ${reasons}${notes ? ` - ${notes}` : ''}`,
         );
 
         // Emit new alert event
         this.eventEmitter.emitAlertNew(alert);
 
-        console.log(`🚨 HIGH RISK ALERT: $${finalAmount} (${riskAnalysis.riskScore}%) - ${reasons}${notes ? ` - ${notes}` : ''}`);
+        // console.log(`🚨 HIGH RISK ALERT: $${finalAmount} (${riskAnalysis.riskScore}%) - ${reasons}${notes ? ` - ${notes}` : ''}`);
       } else if (riskAnalysis.riskScore >= SimulationConfig.RISK_THRESHOLDS.MEDIUM_RISK) {
-        const riskLevel = this.getRiskLevel(riskAnalysis.riskScore);
-        console.log(`⚠️  ${riskLevel} risk transaction: $${finalAmount} (${riskAnalysis.riskScore}%)${notes ? ` - ${notes}` : ''}`);
+        // console.log(`⚠️  ${this.getRiskLevel(riskAnalysis.riskScore)} risk transaction: $${finalAmount} (${riskAnalysis.riskScore}%)${notes ? ` - ${notes}` : ''}`);
       } else {
-        console.log(`💳 Low risk transaction: $${finalAmount} (${riskAnalysis.riskScore}%)`);
+        // console.log(`💳 Low risk transaction: $${finalAmount} (${riskAnalysis.riskScore}%)`);
       }
 
       // Emit dashboard stats update
@@ -140,7 +130,7 @@ export class TransactionSimulator {
   }
 
   startSimulation(): NodeJS.Timeout {
-    console.log('🔄 Starting enhanced transaction simulation (every 3 seconds)...');
+    // console.log('🔄 Starting enhanced transaction simulation (every 3 seconds)...');
 
     // Generate initial transaction
     this.simulateTransaction();
@@ -150,7 +140,7 @@ export class TransactionSimulator {
   }
 
   stopSimulation(intervalId: NodeJS.Timeout): void {
-    console.log('🛑 Stopping transaction simulation...');
+    // console.log('🛑 Stopping transaction simulation...');
     clearInterval(intervalId);
   }
 

@@ -2,10 +2,16 @@ import express from 'express';
 import { prisma } from '../prisma/client';
 import { analyzeTransactionRisk, getSimulationStatus } from '../services';
 import mlRouter from './ml';
-import { handleRouteError, ErrorMessages, ErrorCodes } from '../utils/errorHandler';
-import { isValidTimeframe, getCreatedAtFilter, getTimestampFilter } from '../utils/timeframeFilter';
-
-
+import {
+  handleRouteError,
+  ErrorMessages,
+  ErrorCodes,
+} from '../utils/errorHandler';
+import {
+  isValidTimeframe,
+  getCreatedAtFilter,
+  getTimestampFilter,
+} from '../utils/timeframeFilter';
 
 const router = express.Router();
 
@@ -244,7 +250,10 @@ router.get('/dashboard/stats', async (req, res) => {
         highRiskTransactions,
         todayTransactions,
         todayAlerts,
-        alertResolutionRate: totalAlerts > 0 ? ((totalAlerts - openAlerts) / totalAlerts * 100).toFixed(2) : '0',
+        alertResolutionRate:
+          totalAlerts > 0
+            ? (((totalAlerts - openAlerts) / totalAlerts) * 100).toFixed(2)
+            : '0',
         avgRiskScore: avgRiskScore._avg.risk_score?.toFixed(2) || '0',
       },
     });
@@ -266,13 +275,10 @@ router.get('/dashboard/charts', async (req, res) => {
       });
     }
 
-    const [
-      alertTrends,
-      riskDistribution,
-      transactionVolume,
-    ] = await Promise.all([
-      // Alert trends by hour
-      prisma.$queryRaw`
+    const [alertTrends, riskDistribution, transactionVolume] =
+      await Promise.all([
+        // Alert trends by hour
+        prisma.$queryRaw`
         SELECT 
           DATE_TRUNC('hour', created_at) as hour_bucket,
           COUNT(*) as alert_count,
@@ -283,8 +289,8 @@ router.get('/dashboard/charts', async (req, res) => {
         ORDER BY hour_bucket DESC
         LIMIT 100
       `,
-      // Risk distribution
-      prisma.$queryRaw`
+        // Risk distribution
+        prisma.$queryRaw`
         SELECT 
           CASE 
             WHEN risk_score < 30 THEN 'low'
@@ -297,8 +303,8 @@ router.get('/dashboard/charts', async (req, res) => {
         GROUP BY risk_level
         ORDER BY count DESC
       `,
-      // Transaction volume by hour
-      prisma.$queryRaw`
+        // Transaction volume by hour
+        prisma.$queryRaw`
         SELECT 
           DATE_TRUNC('hour', timestamp) as hour_bucket,
           COUNT(*) as transaction_count,
@@ -309,7 +315,7 @@ router.get('/dashboard/charts', async (req, res) => {
         ORDER BY hour_bucket DESC
         LIMIT 100
       `,
-    ]);
+      ]);
 
     res.json({
       success: true,
@@ -351,11 +357,18 @@ router.get('/dashboard/alert-trends', async (req, res) => {
     if (timeframe === 'all') {
       query = `SELECT * FROM alert_trends_hourly ORDER BY hour_bucket DESC LIMIT ${limit}`;
     } else {
-      const interval = timeframe === '1h' ? '1 hour' : 
-                      timeframe === '6h' ? '6 hours' : 
-                      timeframe === '12h' ? '12 hours' : 
-                      timeframe === '24h' ? '24 hours' : 
-                      timeframe === '7d' ? '7 days' : '30 days';
+      const interval =
+        timeframe === '1h'
+          ? '1 hour'
+          : timeframe === '6h'
+            ? '6 hours'
+            : timeframe === '12h'
+              ? '12 hours'
+              : timeframe === '24h'
+                ? '24 hours'
+                : timeframe === '7d'
+                  ? '7 days'
+                  : '30 days';
       query = `SELECT * FROM alert_trends_hourly WHERE hour_bucket >= NOW() - INTERVAL '${interval}' ORDER BY hour_bucket DESC LIMIT ${limit}`;
     }
 
@@ -379,8 +392,10 @@ router.get('/dashboard/alert-trends', async (req, res) => {
 router.get('/dashboard/risk-distribution', async (req, res) => {
   try {
     const timeframe = (req.query.timeframe as string) || 'all';
+    console.log(`🔍 Risk distribution request - timeframe: ${timeframe} - VOLUME MOUNT TEST`);
 
     if (!isValidTimeframe(timeframe)) {
+      console.log(`❌ Invalid timeframe: ${timeframe}`);
       return res.status(400).json({
         success: false,
         error: 'Invalid timeframe parameter',
@@ -388,48 +403,128 @@ router.get('/dashboard/risk-distribution', async (req, res) => {
       });
     }
 
-    let query = '';
+    let riskDistribution;
+
     if (timeframe === 'all') {
-      query = 'SELECT * FROM risk_distribution';
+      console.log('📊 Using risk_distribution view for "all" timeframe');
+      riskDistribution =
+        (await prisma.$queryRaw`SELECT * FROM risk_distribution`) as any[];
+      // Ensure BigInt values from raw query are converted to strings
+      riskDistribution = riskDistribution.map((item: any) => ({
+        ...item,
+        count:
+          typeof item.count === 'bigint' ? item.count.toString() : item.count,
+        // Add other fields if they might contain BigInt
+      }));
     } else {
-      const interval = timeframe === '1h' ? '1 hour' : 
-                      timeframe === '6h' ? '6 hours' : 
-                      timeframe === '12h' ? '12 hours' : 
-                      timeframe === '24h' ? '24 hours' : 
-                      timeframe === '7d' ? '7 days' : '30 days';
-      query = `
-        WITH timeframe_signals AS (
-          SELECT CAST(COUNT(*) AS INTEGER) as total_count
-          FROM risk_signals rs2 
-          WHERE rs2.created_at >= NOW() - INTERVAL '${interval}'
-        )
-        SELECT 
-          CASE 
-            WHEN rs.risk_score < 30 THEN 'low'
-            WHEN rs.risk_score < 70 THEN 'medium'
-            ELSE 'high'
-          END as risk_level,
-          CAST(COUNT(*) AS INTEGER) as count,
-          CASE 
-            WHEN tf.total_count > 0 THEN ROUND(COUNT(*) * 100.0 / tf.total_count, 2)
-            ELSE 0
-          END as percentage
-        FROM risk_signals rs
-        CROSS JOIN timeframe_signals tf
-        WHERE rs.created_at >= NOW() - INTERVAL '${interval}'
-        GROUP BY risk_level, tf.total_count
-        ORDER BY count DESC
-      `;
+      // Calculate timeframe interval
+      const now = new Date();
+      let startDate: Date;
+
+      switch (timeframe) {
+        case '1h':
+          startDate = new Date(now.getTime() - 60 * 60 * 1000);
+          break;
+        case '6h':
+          startDate = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+          break;
+        case '12h':
+          startDate = new Date(now.getTime() - 12 * 60 * 60 * 1000);
+          break;
+        case '24h':
+          startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+          break;
+        case '7d':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case '30d':
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        default:
+          startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      }
+
+      console.log(
+        `⏰ Using Prisma query for timeframe: ${timeframe} from ${startDate}`,
+      );
+
+      // Get total count for percentage calculation
+      const totalCountResult = await prisma.risk_signals.count({
+        where: {
+          created_at: {
+            gte: startDate,
+          },
+        },
+      });
+      const totalCount =
+        typeof totalCountResult === 'bigint'
+          ? Number(totalCountResult)
+          : totalCountResult;
+
+      // Get risk distribution data
+      const riskData = await prisma.risk_signals.groupBy({
+        by: ['risk_score'],
+        where: {
+          created_at: {
+            gte: startDate,
+          },
+        },
+        _count: {
+          risk_score: true,
+        },
+      });
+
+      // Process the data to group by risk levels
+      const riskLevels = {
+        low: 0,
+        medium: 0,
+        high: 0,
+      };
+
+      riskData.forEach((item) => {
+        const count =
+          typeof item._count.risk_score === 'bigint'
+            ? Number(item._count.risk_score)
+            : item._count.risk_score;
+        if (item.risk_score < 30) {
+          riskLevels.low += count;
+        } else if (item.risk_score < 70) {
+          riskLevels.medium += count;
+        } else {
+          riskLevels.high += count;
+        }
+      });
+
+      // Convert to array format with percentages
+      riskDistribution = Object.entries(riskLevels)
+        .map(([level, count]) => ({
+          risk_level: level,
+          count,
+          percentage:
+            totalCount > 0 ? ((count * 100.0) / totalCount).toFixed(2) : '0',
+        }))
+        .filter((item) => item.count > 0)
+        .sort((a, b) => b.count - a.count);
     }
 
-    const riskDistribution = await prisma.$queryRawUnsafe(query);
+    console.log('✅ Query executed successfully');
+    console.log('📊 Result:', JSON.stringify(riskDistribution, null, 2));
+
+    // Final serialization to ensure no BigInt issues
+    const serializedData = JSON.parse(
+      JSON.stringify(riskDistribution, (key, value) =>
+        typeof value === 'bigint' ? value.toString() : value,
+      ),
+    );
 
     res.json({
       success: true,
-      data: riskDistribution,
+      data: serializedData,
       timeframe,
     });
+    console.log('✅ Response sent successfully');
   } catch (error) {
+    console.error('❌ Error in risk-distribution endpoint:', error);
     handleRouteError(error, res, 'DASHBOARD', 'FETCHING_RISK_DISTRIBUTION');
   }
 });
@@ -460,11 +555,18 @@ router.get('/dashboard/transaction-volume', async (req, res) => {
     if (timeframe === 'all') {
       query = `SELECT * FROM transaction_volume_hourly ORDER BY hour_bucket DESC LIMIT ${limit}`;
     } else {
-      const interval = timeframe === '1h' ? '1 hour' : 
-                      timeframe === '6h' ? '6 hours' : 
-                      timeframe === '12h' ? '12 hours' : 
-                      timeframe === '24h' ? '24 hours' : 
-                      timeframe === '7d' ? '7 days' : '30 days';
+      const interval =
+        timeframe === '1h'
+          ? '1 hour'
+          : timeframe === '6h'
+            ? '6 hours'
+            : timeframe === '12h'
+              ? '12 hours'
+              : timeframe === '24h'
+                ? '24 hours'
+                : timeframe === '7d'
+                  ? '7 days'
+                  : '30 days';
       query = `SELECT * FROM transaction_volume_hourly WHERE hour_bucket >= NOW() - INTERVAL '${interval}' ORDER BY hour_bucket DESC LIMIT ${limit}`;
     }
 
@@ -539,7 +641,11 @@ router.get('/risk-analysis/:transactionId', async (req, res) => {
     const { transactionId } = req.params;
 
     // Input validation
-    if (!transactionId || typeof transactionId !== 'string' || transactionId.trim() === '') {
+    if (
+      !transactionId ||
+      typeof transactionId !== 'string' ||
+      transactionId.trim() === ''
+    ) {
       return res.status(400).json({
         success: false,
         error: ErrorMessages.INVALID_TRANSACTION_ID,
@@ -582,7 +688,12 @@ router.get('/risk-analysis/:transactionId', async (req, res) => {
       },
     });
   } catch (error) {
-    handleRouteError(error, res, 'TRANSACTION_SERVICE', 'ANALYZING_TRANSACTION_RISK');
+    handleRouteError(
+      error,
+      res,
+      'TRANSACTION_SERVICE',
+      'ANALYZING_TRANSACTION_RISK',
+    );
   }
 });
 
