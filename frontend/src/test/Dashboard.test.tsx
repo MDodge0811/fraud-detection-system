@@ -51,6 +51,7 @@ vi.mock('@/stores', () => ({
       getPaginatedAlerts: vi.fn(() => []),
       getAlertsPageInfo: vi.fn(() => ({ currentPage: 1, totalPages: 1, totalAlerts: 0 })),
       fetchDashboardData: vi.fn(),
+      fetchChartData: vi.fn(),
     };
 
     // If selector is provided, call it with the state

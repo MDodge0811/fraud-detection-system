@@ -133,7 +133,7 @@ export class TransactionSimulator {
   }
 
   stopSimulation(intervalId: NodeJS.Timeout): void {
-    // console.log('🛑 Stopping transaction simulation...');
+    console.log('🛑 Stopping transaction simulation...');
     clearInterval(intervalId);
   }
 

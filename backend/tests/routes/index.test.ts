@@ -121,6 +121,10 @@ describe('Main Routes', () => {
           count: 1,
           limit: 50,
           hasMore: false,
+          page: 1,
+          timeframe: '24h',
+          total: 1,
+          totalPages: 1,
         },
       });
     });
@@ -134,6 +138,10 @@ describe('Main Routes', () => {
         count: 1,
         limit: 10,
         hasMore: false,
+        page: 1,
+        timeframe: '24h',
+        total: 1,
+        totalPages: 1,
       });
     });
 
@@ -229,6 +237,10 @@ describe('Main Routes', () => {
           count: expect.any(Number),
           limit: 100,
           hasMore: false,
+          page: 1,
+          timeframe: '24h',
+          total: expect.any(Number),
+          totalPages: expect.any(Number),
         },
       });
     });
@@ -380,6 +392,9 @@ describe('Main Routes', () => {
           totalTransactions: expect.any(Number),
           highRiskTransactions: expect.any(Number),
           alertResolutionRate: expect.any(String),
+          avgRiskScore: expect.any(String),
+          todayAlerts: expect.any(Number),
+          todayTransactions: expect.any(Number),
         },
       });
     });
