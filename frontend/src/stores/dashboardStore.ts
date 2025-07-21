@@ -191,22 +191,30 @@ export const useDashboardStore = create<DashboardState>()(
         
         const data = state.riskDistribution.map(item => item.count);
         
+        // Create a color mapping based on risk level
+        const colorMap = {
+          low: {
+            backgroundColor: 'rgba(34, 197, 94, 0.8)', // Green
+            borderColor: 'rgb(34, 197, 94)',
+          },
+          medium: {
+            backgroundColor: 'rgba(251, 191, 36, 0.8)', // Yellow/Orange
+            borderColor: 'rgb(251, 191, 36)',
+          },
+          high: {
+            backgroundColor: 'rgba(239, 68, 68, 0.8)', // Red
+            borderColor: 'rgb(239, 68, 68)',
+          },
+        };
+        
         return {
           labels,
           datasets: [
             {
               label: 'Risk Distribution',
               data,
-              backgroundColor: [
-                'rgba(34, 197, 94, 0.8)',
-                'rgba(251, 191, 36, 0.8)',
-                'rgba(239, 68, 68, 0.8)',
-              ],
-              borderColor: [
-                'rgb(34, 197, 94)',
-                'rgb(251, 191, 36)',
-                'rgb(239, 68, 68)',
-              ],
+              backgroundColor: state.riskDistribution.map(item => colorMap[item.risk_level].backgroundColor),
+              borderColor: state.riskDistribution.map(item => colorMap[item.risk_level].borderColor),
               borderWidth: 2,
             },
           ],

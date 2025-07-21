@@ -276,21 +276,33 @@ const PaginationButton = styled.button<{ variant?: 'primary' | 'secondary'; disa
   font-size: ${({ theme }) => theme.typography.fontSizes.sm};
   font-weight: ${({ theme }) => theme.typography.fontWeights.medium};
   border-radius: ${({ theme }) => theme.borderRadius.md};
-  border: none;
+  border: 1px solid ${({ theme }) => theme.colors.border.primary};
   cursor: ${({ disabled }) => disabled ? 'not-allowed' : 'pointer'};
   opacity: ${({ disabled }) => disabled ? 0.5 : 1};
   transition: all ${({ theme }) => theme.transitions.fast};
   
   background-color: ${({ variant, theme }) => {
     switch (variant) {
-      case 'primary': return theme.colors.status.success;
-      case 'secondary': return theme.colors.status.error;
-      default: return theme.colors.button.primary;
+      case 'primary': return theme.colors.button.primary;
+      case 'secondary': return theme.colors.background.secondary;
+      default: return theme.colors.background.card;
     }
   }};
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: ${({ variant, theme }) => {
+    switch (variant) {
+      case 'primary': return theme.colors.text.inverse;
+      default: return theme.colors.text.primary;
+    }
+  }};
   
   &:hover:not(:disabled) {
+    background-color: ${({ variant, theme }) => {
+      switch (variant) {
+        case 'primary': return theme.colors.button.primaryHover;
+        case 'secondary': return theme.colors.background.tertiary;
+        default: return theme.colors.background.secondary;
+      }
+    }};
     transform: translateY(-1px);
     box-shadow: ${({ theme }) => theme.shadows.sm};
   }

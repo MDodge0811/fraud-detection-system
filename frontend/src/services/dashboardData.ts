@@ -125,26 +125,36 @@ class DashboardDataService {
 
   // Generate risk distribution chart data
   generateRiskDistributionData(): ChartData {
+    // Create a color mapping based on risk level
+    const colorMap = {
+      low: {
+        backgroundColor: 'rgba(34, 197, 94, 0.8)', // Green
+        borderColor: 'rgb(34, 197, 94)',
+      },
+      medium: {
+        backgroundColor: 'rgba(251, 191, 36, 0.8)', // Yellow/Orange
+        borderColor: 'rgb(251, 191, 36)',
+      },
+      high: {
+        backgroundColor: 'rgba(239, 68, 68, 0.8)', // Red
+        borderColor: 'rgb(239, 68, 68)',
+      },
+    };
+
+    const riskLevels = [
+      { level: 'low', count: this.riskDistributionData.low },
+      { level: 'medium', count: this.riskDistributionData.medium },
+      { level: 'high', count: this.riskDistributionData.high },
+    ].filter(item => item.count > 0);
+
     return {
-      labels: ['Low Risk', 'Medium Risk', 'High Risk'],
+      labels: riskLevels.map(item => `${item.level.charAt(0).toUpperCase() + item.level.slice(1)} Risk`),
       datasets: [
         {
           label: 'Risk Distribution',
-          data: [
-            this.riskDistributionData.low,
-            this.riskDistributionData.medium,
-            this.riskDistributionData.high,
-          ],
-          backgroundColor: [
-            'rgba(34, 197, 94, 0.8)',
-            'rgba(251, 191, 36, 0.8)',
-            'rgba(239, 68, 68, 0.8)',
-          ],
-          borderColor: [
-            'rgb(34, 197, 94)',
-            'rgb(251, 191, 36)',
-            'rgb(239, 68, 68)',
-          ],
+          data: riskLevels.map(item => item.count),
+          backgroundColor: riskLevels.map(item => colorMap[item.level as keyof typeof colorMap].backgroundColor),
+          borderColor: riskLevels.map(item => colorMap[item.level as keyof typeof colorMap].borderColor),
           borderWidth: 2,
         },
       ],
