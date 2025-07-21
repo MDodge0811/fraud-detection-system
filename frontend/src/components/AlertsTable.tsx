@@ -51,7 +51,7 @@ const AlertsTable: React.FC = () => {
                   {alert.alert_id.slice(0, 8)}...
                 </TableCell>
                 <TableCell>
-                  <RiskBadge riskLevel={getRiskLevel(alert.risk_score)}>
+                  <RiskBadge $riskLevel={getRiskLevel(alert.risk_score)}>
                     {alert.risk_score}%
                   </RiskBadge>
                 </TableCell>
@@ -59,7 +59,7 @@ const AlertsTable: React.FC = () => {
                   {alert.reason}
                 </TableCellText>
                 <TableCell>
-                  <StatusBadge status={alert.status}>
+                  <StatusBadge $status={alert.status}>
                     {alert.status}
                   </StatusBadge>
                 </TableCell>
@@ -213,21 +213,21 @@ const TableCellText = styled.td`
   white-space: nowrap;
 `;
 
-const RiskBadge = styled.span<{ riskLevel: 'high' | 'medium' | 'low' }>`
+const RiskBadge = styled.span<{ $riskLevel: 'high' | 'medium' | 'low' }>`
   display: inline-flex;
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
   font-size: ${({ theme }) => theme.typography.fontSizes.xs};
   font-weight: ${({ theme }) => theme.typography.fontWeights.semibold};
   border-radius: ${({ theme }) => theme.borderRadius.full};
-  background-color: ${({ riskLevel, theme }) => {
-    switch (riskLevel) {
+  background-color: ${({ $riskLevel, theme }) => {
+    switch ($riskLevel) {
       case 'high': return `${theme.colors.risk.high}20`;
       case 'medium': return `${theme.colors.risk.medium}20`;
       default: return `${theme.colors.risk.low}20`;
     }
   }};
-  color: ${({ riskLevel, theme }) => {
-    switch (riskLevel) {
+  color: ${({ $riskLevel, theme }) => {
+    switch ($riskLevel) {
       case 'high': return theme.colors.risk.high;
       case 'medium': return theme.colors.risk.medium;
       default: return theme.colors.risk.low;
@@ -235,17 +235,17 @@ const RiskBadge = styled.span<{ riskLevel: 'high' | 'medium' | 'low' }>`
   }};
 `;
 
-const StatusBadge = styled.span<{ status: string }>`
+const StatusBadge = styled.span<{ $status: string }>`
   display: inline-flex;
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
   font-size: ${({ theme }) => theme.typography.fontSizes.xs};
   font-weight: ${({ theme }) => theme.typography.fontWeights.semibold};
   border-radius: ${({ theme }) => theme.borderRadius.full};
-  background-color: ${({ status, theme }) =>
-    status === 'open' ? `${theme.colors.status.error}20` : `${theme.colors.status.success}20`
+  background-color: ${({ $status, theme }) =>
+    $status === 'open' ? `${theme.colors.status.error}20` : `${theme.colors.status.success}20`
 };
-  color: ${({ status, theme }) =>
-    status === 'open' ? theme.colors.status.error : theme.colors.status.success
+  color: ${({ $status, theme }) =>
+    $status === 'open' ? theme.colors.status.error : theme.colors.status.success
 };
 `;
 

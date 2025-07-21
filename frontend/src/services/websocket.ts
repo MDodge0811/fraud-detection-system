@@ -128,18 +128,22 @@ class WebSocketService {
 
     // Handle real-time events
     this.socket.on('transaction:new', (event: RealtimeEvent) => {
+      console.log('📡 Received transaction:new event:', event);
       this.emit('transaction:new', event);
     });
 
     this.socket.on('alert:new', (event: RealtimeEvent) => {
+      console.log('📡 Received alert:new event:', event);
       this.emit('alert:new', event);
     });
 
     this.socket.on('risk-signal:new', (event: RealtimeEvent) => {
+      console.log('📡 Received risk-signal:new event:', event);
       this.emit('risk-signal:new', event);
     });
 
     this.socket.on('dashboard:stats', (event: RealtimeEvent) => {
+      console.log('📡 Received dashboard:stats event:', event);
       this.emit('dashboard:stats', event);
     });
 

@@ -79,6 +79,7 @@ export function createSocketServer(httpServer: any): Server {
 
   // Store io globally for access in other modules
   global.io = io;
+  console.log('🔌 WebSocket server created and stored globally');
 
   // Setup WebSocket handlers
   setupWebSocketHandlers(io);

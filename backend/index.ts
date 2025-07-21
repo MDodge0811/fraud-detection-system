@@ -53,6 +53,7 @@ async function startServer() {
       console.log(`💳 Transactions endpoint: http://localhost:${PORT}/api/transactions`);
       console.log(`📈 Dashboard stats: http://localhost:${PORT}/api/dashboard/stats`);
       console.log(`🔌 WebSocket server ready on ws://localhost:${PORT}`);
+      console.log(`🔍 Global.io available before simulation:`, !!global.io);
 
       // Start transaction simulation after server is running
       const simulationInterval = startTransactionSimulation();

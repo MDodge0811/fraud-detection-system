@@ -12,11 +12,22 @@ export class EventEmitter {
 
   constructor() {
     this.io = global.io;
+    console.log('🔌 EventEmitter initialized, global.io available:', !!this.io);
   }
 
   emit(event: string, data: any): void {
     if (this.io) {
+      console.log(`🔌 Emitting WebSocket event: ${event}`);
       this.io.emit(event, data);
+    } else {
+      console.log(`⚠️  WebSocket server not available for event: ${event}`);
+      console.log(`🔍 Global.io status:`, !!global.io);
+      // Try to get io again in case it was set after constructor
+      this.io = global.io;
+      if (this.io) {
+        console.log(`✅ WebSocket server now available, retrying emit: ${event}`);
+        this.io.emit(event, data);
+      }
     }
   }
 
