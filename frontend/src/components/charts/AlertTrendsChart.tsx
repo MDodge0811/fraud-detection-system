@@ -4,13 +4,13 @@ import { Bar } from 'react-chartjs-2';
 import { useDashboardStore } from '@/stores';
 
 const AlertTrendsChart: React.FC = () => {
-  const getAlertTrendsData = useDashboardStore(state => state.getAlertTrendsData);
+  const { getAlertTrendsChartData, timeframe } = useDashboardStore();
 
   return (
     <ChartContainer>
-      <ChartTitle>Alert Trends (All Time)</ChartTitle>
+      <ChartTitle>Alert Trends ({timeframe})</ChartTitle>
       <Bar
-        data={getAlertTrendsData()}
+        data={getAlertTrendsChartData()}
         options={{
           responsive: true,
           plugins: {

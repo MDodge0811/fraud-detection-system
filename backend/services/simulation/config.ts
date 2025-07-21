@@ -51,8 +51,8 @@ export const SimulationConfig = {
 
   // Simulation settings
   SIMULATION: {
-    INTERVAL_MS: 3000,
-    DESCRIPTION: 'Generates enhanced mock transactions every 3 seconds with fraud patterns',
+    INTERVAL_MS: 10000,
+    DESCRIPTION: 'Generates enhanced mock transactions every 10 seconds with fraud patterns',
   },
 
   // WebSocket events

@@ -4,13 +4,13 @@ import { Line } from 'react-chartjs-2';
 import { useDashboardStore } from '@/stores';
 
 const TransactionVolumeChart: React.FC = () => {
-  const getTransactionVolumeData = useDashboardStore(state => state.getTransactionVolumeData);
+  const { getTransactionVolumeChartData, timeframe } = useDashboardStore();
 
   return (
     <ChartContainer>
-      <ChartTitle>Transaction Volume (All Time)</ChartTitle>
+      <ChartTitle>Transaction Volume ({timeframe})</ChartTitle>
       <Line
-        data={getTransactionVolumeData()}
+        data={getTransactionVolumeChartData()}
         options={{
           responsive: true,
           plugins: {

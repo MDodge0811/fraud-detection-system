@@ -8,10 +8,13 @@ export interface RealtimeEvent {
 
 export interface DashboardStats {
   totalAlerts: number;
+  openAlerts: number;
   totalTransactions: number;
   highRiskTransactions: number;
-  averageAmount: number;
+  todayTransactions: number;
+  todayAlerts: number;
   alertResolutionRate: string;
+  avgRiskScore: string;
 }
 
 export interface Transaction {
@@ -165,8 +168,8 @@ class WebSocketService {
 
       // Fetch latest data
       const [transactions, alerts, dashboardStats] = await Promise.all([
-        apiService.getTransactions(100, true),
-        apiService.getAlerts(50, true),
+        apiService.getTransactions(100, 'all'),
+        apiService.getAlerts(50, 'all'),
         apiService.getDashboardStats(),
       ]);
 

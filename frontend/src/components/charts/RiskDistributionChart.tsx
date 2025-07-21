@@ -4,13 +4,13 @@ import { Doughnut } from 'react-chartjs-2';
 import { useDashboardStore } from '@/stores';
 
 const RiskDistributionChart: React.FC = () => {
-  const getRiskDistributionData = useDashboardStore(state => state.getRiskDistributionData);
+  const { getRiskDistributionChartData, timeframe } = useDashboardStore();
 
   return (
     <ChartContainer>
-      <ChartTitle>Risk Distribution (All Time)</ChartTitle>
+      <ChartTitle>Risk Distribution ({timeframe})</ChartTitle>
       <Doughnut
-        data={getRiskDistributionData()}
+        data={getRiskDistributionChartData()}
         options={{
           responsive: true,
           plugins: {

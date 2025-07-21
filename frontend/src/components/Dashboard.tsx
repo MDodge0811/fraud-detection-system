@@ -20,6 +20,7 @@ import { useDashboardStore, useWebSocketStore } from '@/stores';
 import StatsCards from '@/components/StatsCards';
 import ConnectionStatus from '@/components/ConnectionStatus';
 import AlertsTable from '@/components/AlertsTable';
+import TimeframeSelector from '@/components/TimeframeSelector';
 import { TransactionVolumeChart, RiskDistributionChart, AlertTrendsChart } from '@/components/charts';
 
 // Register ChartJS components
@@ -37,16 +38,34 @@ ChartJS.register(
 
 const Dashboard: React.FC = () => {
   // Dashboard store
-  const { loading, fetchDashboardData } = useDashboardStore();
+  const {
+    loading,
+    timeframe,
+    fetchDashboardData,
+    fetchChartData,
+    setTimeframe,
+  } = useDashboardStore();
 
   // WebSocket store
   const { connect, disconnect, subscribeToEvents, unsubscribeFromEvents } = useWebSocketStore();
+
+  // Handle timeframe change
+  const handleTimeframeChange = async (newTimeframe: string) => {
+    setTimeframe(newTimeframe as any);
+    await Promise.all([
+      fetchDashboardData(newTimeframe as any),
+      fetchChartData(newTimeframe as any),
+    ]);
+  };
 
   // Initialize dashboard
   useEffect(() => {
     const initializeDashboard = async () => {
       // Fetch initial data
-      fetchDashboardData();
+      await Promise.all([
+        fetchDashboardData(),
+        fetchChartData(),
+      ]);
 
       // Connect to WebSocket (will fallback to polling if WebSocket fails)
       await connect();
@@ -62,7 +81,7 @@ const Dashboard: React.FC = () => {
       unsubscribeFromEvents();
       disconnect();
     };
-  }, [fetchDashboardData, connect, disconnect, subscribeToEvents, unsubscribeFromEvents]);
+  }, [fetchDashboardData, fetchChartData, connect, disconnect, subscribeToEvents, unsubscribeFromEvents]);
 
   if (loading) {
     return (
@@ -75,14 +94,21 @@ const Dashboard: React.FC = () => {
   return (
     <DashboardContainer>
       <DashboardContent>
-        {/* Header with connection status */}
+        {/* Header with connection status and timeframe selector */}
         <Header>
           <HeaderContent>
             <HeaderText>
               <Title>Fraud Detection Dashboard</Title>
               <Subtitle>Real-time monitoring of transactions and fraud alerts</Subtitle>
             </HeaderText>
-            <ConnectionStatus />
+            <HeaderControls>
+              <TimeframeSelector
+                timeframe={timeframe}
+                onTimeframeChange={handleTimeframeChange}
+                disabled={loading}
+              />
+              <ConnectionStatus />
+            </HeaderControls>
           </HeaderContent>
         </Header>
 
@@ -139,6 +165,18 @@ const HeaderContent = styled.div`
 `;
 
 const HeaderText = styled.div``;
+
+const HeaderControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.lg};
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: ${({ theme }) => theme.spacing.md};
+  }
+`;
 
 const Title = styled.h1`
   font-size: ${({ theme }) => theme.typography.fontSizes['3xl']};

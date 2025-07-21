@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import websocketService, { type RealtimeEvent, type Transaction, type Alert } from '@/services/websocket';
+import websocketService, { type RealtimeEvent, type Alert } from '@/services/websocket';
 import { type DashboardStats } from '@/services/api';
 import { useDashboardStore } from '@/stores/dashboardStore';
 
@@ -71,12 +71,9 @@ export const useWebSocketStore = create<WebSocketState>()(
         const dashboardStore = useDashboardStore.getState();
 
         // Handle new transaction events
-        const handleNewTransaction = (data: unknown) => {
-          const event = data as RealtimeEvent;
-          const transaction = event.data as Transaction;
-
-          // Update chart data
-          dashboardStore.updateTransactionData(transaction);
+        const handleNewTransaction = (_data: unknown) => {
+          // Note: Chart data is now fetched from aggregated endpoints
+          // No need to update individual transaction data
         };
 
         // Handle new alert events
@@ -87,8 +84,8 @@ export const useWebSocketStore = create<WebSocketState>()(
           // Add alert to store
           dashboardStore.addAlert(alert);
 
-          // Update chart data
-          dashboardStore.updateAlertData(alert);
+          // Note: Chart data is now fetched from aggregated endpoints
+          // No need to update individual alert data
         };
 
         // Handle dashboard stats updates
