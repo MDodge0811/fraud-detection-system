@@ -149,11 +149,8 @@ export class TransactionSimulator {
     if (riskScore >= SimulationConfig.RISK_THRESHOLDS.CRITICAL_RISK) {
       return 'Critical';
     }
-    if (riskScore >= 80) {
+    if (riskScore >= SimulationConfig.RISK_THRESHOLDS.HIGH_RISK) {
       return 'High';
-    }
-    if (riskScore >= 70) {
-      return 'Elevated';
     }
     if (riskScore >= SimulationConfig.RISK_THRESHOLDS.MEDIUM_RISK) {
       return 'Medium';

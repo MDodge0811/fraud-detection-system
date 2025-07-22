@@ -2,7 +2,11 @@ import React from 'react';
 import styled from 'styled-components';
 import { useDashboardStore } from '@/stores';
 
-const StatsCards: React.FC = () => {
+interface StatsCardsProps {
+  loading?: boolean;
+}
+
+const StatsCards: React.FC<StatsCardsProps> = ({ loading = false }) => {
   const stats = useDashboardStore(state => state.stats);
 
   return (
@@ -16,7 +20,9 @@ const StatsCards: React.FC = () => {
           </IconContainer>
           <StatInfo>
             <StatLabel>Total Transactions</StatLabel>
-            <StatValue>{stats?.totalTransactions || 0}</StatValue>
+            <StatValue>
+              {loading ? <LoadingSkeleton /> : (stats?.totalTransactions || 0)}
+            </StatValue>
           </StatInfo>
         </StatContent>
       </StatCard>
@@ -30,7 +36,9 @@ const StatsCards: React.FC = () => {
           </IconContainer>
           <StatInfo>
             <StatLabel>Active Alerts</StatLabel>
-            <StatValue>{stats?.totalAlerts || 0}</StatValue>
+            <StatValue>
+              {loading ? <LoadingSkeleton /> : (stats?.totalAlerts || 0)}
+            </StatValue>
           </StatInfo>
         </StatContent>
       </StatCard>
@@ -44,7 +52,9 @@ const StatsCards: React.FC = () => {
           </IconContainer>
           <StatInfo>
             <StatLabel>High Risk</StatLabel>
-            <StatValue>{stats?.highRiskTransactions || 0}</StatValue>
+            <StatValue>
+              {loading ? <LoadingSkeleton /> : (stats?.highRiskTransactions || 0)}
+            </StatValue>
           </StatInfo>
         </StatContent>
       </StatCard>
@@ -58,7 +68,9 @@ const StatsCards: React.FC = () => {
           </IconContainer>
           <StatInfo>
             <StatLabel>Resolution Rate</StatLabel>
-            <StatValue>{stats?.alertResolutionRate || '0'}%</StatValue>
+            <StatValue>
+              {loading ? <LoadingSkeleton /> : `${stats?.alertResolutionRate || '0'}%`}
+            </StatValue>
           </StatInfo>
         </StatContent>
       </StatCard>
@@ -128,8 +140,22 @@ const StatLabel = styled.p`
   margin-bottom: ${({ theme }) => theme.spacing.xs};
 `;
 
-const StatValue = styled.p`
+const StatValue = styled.div`
   font-size: ${({ theme }) => theme.typography.fontSizes['2xl']};
   font-weight: ${({ theme }) => theme.typography.fontWeights.semibold};
   color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const LoadingSkeleton = styled.div`
+  width: 60px;
+  height: 24px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  
+  @keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
 `;

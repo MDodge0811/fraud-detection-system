@@ -40,10 +40,13 @@ const Dashboard: React.FC = () => {
   // Dashboard store
   const {
     loading,
+    statsLoading,
+    alertsLoading,
+    chartsLoading,
     timeframe,
+    changeTimeframe,
     fetchDashboardData,
     fetchChartData,
-    setTimeframe,
   } = useDashboardStore();
 
   // WebSocket store
@@ -51,11 +54,7 @@ const Dashboard: React.FC = () => {
 
   // Handle timeframe change
   const handleTimeframeChange = async (newTimeframe: string) => {
-    setTimeframe(newTimeframe as any);
-    await Promise.all([
-      fetchDashboardData(newTimeframe as any),
-      fetchChartData(newTimeframe as any),
-    ]);
+    await changeTimeframe(newTimeframe as any);
   };
 
   // Initialize dashboard
@@ -113,19 +112,19 @@ const Dashboard: React.FC = () => {
         </Header>
 
         {/* Stats Cards */}
-        <StatsCards />
+        <StatsCards loading={statsLoading} />
 
         {/* Charts Grid */}
         <ChartsGrid>
-          <TransactionVolumeChart />
-          <RiskDistributionChart />
+          <TransactionVolumeChart loading={chartsLoading} />
+          <RiskDistributionChart loading={chartsLoading} />
         </ChartsGrid>
 
         {/* Alert Trends Chart */}
-        <AlertTrendsChart />
+        <AlertTrendsChart loading={chartsLoading} />
 
         {/* Recent Alerts Table */}
-        <AlertsTable />
+        <AlertsTable loading={alertsLoading} />
       </DashboardContent>
     </DashboardContainer>
   );

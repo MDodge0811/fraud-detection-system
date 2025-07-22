@@ -34,6 +34,21 @@ interface DashboardState {
   alertsPage: number;
   alertsPerPage: number;
 
+  // Loading states for different components
+  statsLoading: boolean;
+  alertsLoading: boolean;
+  chartsLoading: boolean;
+
+  // Cache for different timeframes
+  timeframeCache: Record<Timeframe, {
+    stats: DashboardStats | null;
+    alerts: Alert[];
+    alertTrends: AlertTrendsData[];
+    riskDistribution: RiskDistributionData[];
+    transactionVolume: TransactionVolumeData[];
+    timestamp: number;
+  }>;
+
   // Actions
   setConnectionStatus: (status: 'connecting' | 'connected' | 'disconnected') => void;
   setStats: (stats: DashboardStats) => void;
@@ -41,6 +56,11 @@ interface DashboardState {
   addAlert: (alert: Alert) => void;
   setLoading: (loading: boolean) => void;
   setTimeframe: (timeframe: Timeframe) => void;
+
+  // Loading state actions
+  setStatsLoading: (loading: boolean) => void;
+  setAlertsLoading: (loading: boolean) => void;
+  setChartsLoading: (loading: boolean) => void;
 
   // Chart data actions
   setAlertTrends: (data: AlertTrendsData[]) => void;
@@ -65,6 +85,7 @@ interface DashboardState {
   // Data fetching
   fetchDashboardData: (timeframe?: Timeframe) => Promise<void>;
   fetchChartData: (timeframe?: Timeframe) => Promise<void>;
+  changeTimeframe: (newTimeframe: Timeframe) => Promise<void>;
 }
 
 export const useDashboardStore = create<DashboardState>()(
@@ -89,6 +110,14 @@ export const useDashboardStore = create<DashboardState>()(
       alertsPage: 1,
       alertsPerPage: 10,
 
+      // Loading states for different components
+      statsLoading: false,
+      alertsLoading: false,
+      chartsLoading: false,
+
+      // Cache for different timeframes
+      timeframeCache: {},
+
       // Connection actions
       setConnectionStatus: (status) => {
         set({ connectionStatus: status });
@@ -100,13 +129,28 @@ export const useDashboardStore = create<DashboardState>()(
       },
 
       setRecentAlerts: (alerts) => {
-        set({ recentAlerts: alerts });
+        // Remove duplicates based on alert_id to prevent React key conflicts
+        const uniqueAlerts = alerts.filter((alert, index, self) => 
+          index === self.findIndex(a => a.alert_id === alert.alert_id)
+        );
+        set({ recentAlerts: uniqueAlerts });
       },
 
       addAlert: (alert) => {
-        set((state) => ({
-          recentAlerts: [alert, ...state.recentAlerts.slice(0, 49)],
-        }));
+        set((state) => {
+          // Check if alert already exists to prevent duplicates
+          const alertExists = state.recentAlerts.some(existingAlert => 
+            existingAlert.alert_id === alert.alert_id
+          );
+          
+          if (alertExists) {
+            return state; // Don't add duplicate
+          }
+          
+          return {
+            recentAlerts: [alert, ...state.recentAlerts.slice(0, 49)],
+          };
+        });
       },
 
       setLoading: (loading) => {
@@ -115,6 +159,19 @@ export const useDashboardStore = create<DashboardState>()(
 
       setTimeframe: (timeframe) => {
         set({ timeframe });
+      },
+
+      // Loading state actions
+      setStatsLoading: (loading) => {
+        set({ statsLoading: loading });
+      },
+
+      setAlertsLoading: (loading) => {
+        set({ alertsLoading: loading });
+      },
+
+      setChartsLoading: (loading) => {
+        set({ chartsLoading: loading });
       },
 
       // Chart data actions
@@ -312,6 +369,77 @@ export const useDashboardStore = create<DashboardState>()(
           });
         } catch (error) {
           console.error('Error fetching chart data:', error);
+        }
+      },
+
+      changeTimeframe: async (newTimeframe) => {
+        const state = get();
+        const cache = state.timeframeCache;
+        const cachedData = cache[newTimeframe];
+
+        // Check if we have cached data that's less than 5 minutes old
+        if (cachedData && Date.now() - cachedData.timestamp < 300000) {
+          set({
+            timeframe: newTimeframe,
+            stats: cachedData.stats,
+            recentAlerts: cachedData.alerts,
+            alertTrends: cachedData.alertTrends,
+            riskDistribution: cachedData.riskDistribution,
+            transactionVolume: cachedData.transactionVolume,
+            loading: false,
+          });
+          return;
+        }
+
+        // Set loading states for different components
+        set({ 
+          timeframe: newTimeframe,
+          statsLoading: true,
+          alertsLoading: true,
+          chartsLoading: true,
+        });
+
+        try {
+          const [stats, alerts, alertTrends, riskDistribution, transactionVolume] = await Promise.all([
+            apiService.getDashboardStats(),
+            apiService.getAlerts(50, newTimeframe),
+            apiService.getAlertTrends(newTimeframe, 100),
+            apiService.getRiskDistribution(newTimeframe),
+            apiService.getTransactionVolume(newTimeframe, 100),
+          ]);
+
+          set({
+            stats,
+            recentAlerts: alerts,
+            alertTrends,
+            riskDistribution,
+            transactionVolume,
+            statsLoading: false,
+            alertsLoading: false,
+            chartsLoading: false,
+          });
+
+          // Update cache
+          set((currentState) => ({
+            timeframeCache: {
+              ...currentState.timeframeCache,
+              [newTimeframe]: {
+                stats,
+                alerts,
+                alertTrends,
+                riskDistribution,
+                transactionVolume,
+                timestamp: Date.now(),
+              },
+            },
+          }));
+        } catch (error) {
+          console.error('Error fetching data for new timeframe:', error);
+          set({ 
+            statsLoading: false,
+            alertsLoading: false,
+            chartsLoading: false,
+          });
         }
       },
     }),

@@ -3,63 +3,63 @@ import { MLFeatures } from './types';
 export class RiskScorer {
   // Calculate rule-based risk score
   static calculateRuleBasedScore(features: MLFeatures): number {
-    let score = 0.3; // Lower base score for more diversity
+    let score = 0.2; // Lower base score for more conservative scoring
 
-    // Amount-based rules (more aggressive)
-    if (features.normalizedAmount > 0.9) {
-      score += 0.4; // Very high amounts
-    } else if (features.normalizedAmount > 0.7) {
-      score += 0.25; // High amounts
-    } else if (features.normalizedAmount > 0.5) {
-      score += 0.15; // Medium amounts
+    // Amount-based rules (more conservative)
+    if (features.normalizedAmount > 0.95) {
+      score += 0.3; // Very high amounts
+    } else if (features.normalizedAmount > 0.8) {
+      score += 0.2; // High amounts
+    } else if (features.normalizedAmount > 0.6) {
+      score += 0.1; // Medium amounts
     }
 
-    if (features.amountVelocity > 0.7) {
-      score += 0.2; // High velocity
-    } else if (features.amountVelocity > 0.4) {
-      score += 0.1; // Medium velocity
+    if (features.amountVelocity > 0.8) {
+      score += 0.15; // High velocity
+    } else if (features.amountVelocity > 0.5) {
+      score += 0.05; // Medium velocity
     }
 
     // Device-based rules
-    if (features.deviceFingerprintRisk > 0.8) {
-      score += 0.25; // Very suspicious device
-    } else if (features.deviceFingerprintRisk > 0.6) {
-      score += 0.15; // Suspicious device
+    if (features.deviceFingerprintRisk > 0.9) {
+      score += 0.2; // Very suspicious device
+    } else if (features.deviceFingerprintRisk > 0.7) {
+      score += 0.1; // Suspicious device
     }
 
-    if (features.normalizedDeviceAge > 0.9) {
-      score += 0.2; // Very new device
-    } else if (features.normalizedDeviceAge > 0.7) {
-      score += 0.1; // New device
+    if (features.normalizedDeviceAge > 0.95) {
+      score += 0.15; // Very new device
+    } else if (features.normalizedDeviceAge > 0.8) {
+      score += 0.05; // New device
     }
 
     // Frequency-based rules
-    if (features.normalizedFrequency > 0.8) {
-      score += 0.25; // Very high frequency
-    } else if (features.normalizedFrequency > 0.6) {
-      score += 0.15; // High frequency
+    if (features.normalizedFrequency > 0.9) {
+      score += 0.2; // Very high frequency
+    } else if (features.normalizedFrequency > 0.7) {
+      score += 0.1; // High frequency
     }
 
     // Merchant risk rules
-    if (features.normalizedMerchantRisk > 0.8) {
-      score += 0.3; // Very high risk merchant
-    } else if (features.normalizedMerchantRisk > 0.6) {
-      score += 0.2; // High risk merchant
+    if (features.normalizedMerchantRisk > 0.9) {
+      score += 0.25; // Very high risk merchant
+    } else if (features.normalizedMerchantRisk > 0.7) {
+      score += 0.15; // High risk merchant
     }
 
     // Time-based rules
-    if (features.timeOfDay < 0.15 || features.timeOfDay > 0.85) {
-      score += 0.15; // Very off-hours
-    } else if (features.timeOfDay < 0.25 || features.timeOfDay > 0.75) {
-      score += 0.1; // Off-hours
+    if (features.timeOfDay < 0.1 || features.timeOfDay > 0.9) {
+      score += 0.1; // Very off-hours
+    } else if (features.timeOfDay < 0.2 || features.timeOfDay > 0.8) {
+      score += 0.05; // Off-hours
     }
 
     // Pattern-based rules
-    if (features.transactionPatternRisk > 0.7) {
-      score += 0.2;
-    }
-    if (features.userBehaviorScore > 0.7) {
+    if (features.transactionPatternRisk > 0.8) {
       score += 0.15;
+    }
+    if (features.userBehaviorScore > 0.8) {
+      score += 0.1;
     }
 
     return Math.min(score, 1);

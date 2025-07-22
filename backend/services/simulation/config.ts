@@ -34,11 +34,11 @@ export const SimulationConfig = {
     HIGH_RISK_THRESHOLD: 70,
   },
 
-  // Risk thresholds
+  // Risk thresholds - Adjusted for 60% low risk distribution
   RISK_THRESHOLDS: {
-    HIGH_RISK: 75,
-    MEDIUM_RISK: 50,
-    CRITICAL_RISK: 90,
+    HIGH_RISK: 85,
+    MEDIUM_RISK: 70,
+    CRITICAL_RISK: 95,
   },
 
   // Time windows

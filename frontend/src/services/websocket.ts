@@ -128,22 +128,18 @@ class WebSocketService {
 
     // Handle real-time events
     this.socket.on('transaction:new', (event: RealtimeEvent) => {
-      console.log('📡 Received transaction:new event:', event);
       this.emit('transaction:new', event);
     });
 
     this.socket.on('alert:new', (event: RealtimeEvent) => {
-      console.log('📡 Received alert:new event:', event);
       this.emit('alert:new', event);
     });
 
     this.socket.on('risk-signal:new', (event: RealtimeEvent) => {
-      console.log('📡 Received risk-signal:new event:', event);
       this.emit('risk-signal:new', event);
     });
 
     this.socket.on('dashboard:stats', (event: RealtimeEvent) => {
-      console.log('📡 Received dashboard:stats event:', event);
       this.emit('dashboard:stats', event);
     });
 
@@ -189,17 +185,17 @@ class WebSocketService {
         });
       }
 
-      // Check for new alerts
-      if (alerts.length > this.lastData.alerts.length) {
-        const newAlerts = alerts.slice(this.lastData.alerts.length);
-        newAlerts.forEach(alert => {
-          this.emit('alert:new', {
-            type: 'alert:new',
-            data: alert,
-            timestamp: new Date().toISOString(),
-          });
+      // Check for new alerts by comparing alert IDs
+      const existingAlertIds = new Set(this.lastData.alerts.map(alert => alert.alert_id));
+      const newAlerts = alerts.filter(alert => !existingAlertIds.has(alert.alert_id));
+
+      newAlerts.forEach(alert => {
+        this.emit('alert:new', {
+          type: 'alert:new',
+          data: alert,
+          timestamp: new Date().toISOString(),
         });
-      }
+      });
 
       // Update dashboard stats
       if (!this.lastData.dashboardStats ||

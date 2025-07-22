@@ -48,12 +48,12 @@ export class MLRiskAnalyzer {
         mlConfidence = RiskScorer.calculateMLConfidence(features);
       }
 
-      // Combine ML prediction with rule-based scoring (more diverse)
+      // Combine ML prediction with rule-based scoring (more conservative)
       const ruleBasedScore = RiskScorer.calculateRuleBasedScore(features);
 
-      // Add some randomness for more diverse scores
-      const randomFactor = 0.8 + Math.random() * 0.4; // 0.8 to 1.2
-      const combinedScore = (mlPrediction * 0.6 + ruleBasedScore * 0.4) * randomFactor;
+      // Add some randomness for more diverse scores (reduced range)
+      const randomFactor = 0.9 + Math.random() * 0.2; // 0.9 to 1.1
+      const combinedScore = (mlPrediction * 0.5 + ruleBasedScore * 0.5) * randomFactor;
 
       // Convert to 0-100 scale with more spread
       const riskScore = Math.round(Math.max(0, Math.min(100, combinedScore * 100)));

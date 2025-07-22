@@ -3,7 +3,11 @@ import styled from 'styled-components';
 import { format } from 'date-fns';
 import { useDashboardStore } from '@/stores';
 
-const AlertsTable: React.FC = () => {
+interface AlertsTableProps {
+  loading?: boolean;
+}
+
+const AlertsTable: React.FC<AlertsTableProps> = ({ loading = false }) => {
   const {
     getPaginatedAlerts,
     getAlertsPageInfo,
@@ -16,10 +20,27 @@ const AlertsTable: React.FC = () => {
   const { currentPage, totalPages, totalAlerts } = getAlertsPageInfo();
 
   const getRiskLevel = (score: number): 'high' | 'medium' | 'low' => {
-    if (score >= 90) return 'high';
-    if (score >= 75) return 'medium';
+    if (score >= 85) return 'high';
+    if (score >= 70) return 'medium';
     return 'low';
   };
+
+  if (loading) {
+    return (
+      <TableContainer>
+        <TableHeader>
+          <HeaderContent>
+            <TableTitle>Recent Alerts</TableTitle>
+            <TableInfo>Loading alerts...</TableInfo>
+          </HeaderContent>
+        </TableHeader>
+        <LoadingContainer>
+          <LoadingSpinner />
+          <LoadingText>Loading alert data...</LoadingText>
+        </LoadingContainer>
+      </TableContainer>
+    );
+  }
 
   return (
     <TableContainer>
@@ -45,8 +66,8 @@ const AlertsTable: React.FC = () => {
             </tr>
           </TableHead>
           <TableBody>
-            {paginatedAlerts.map((alert) => (
-              <TableRow key={alert.alert_id}>
+            {paginatedAlerts.map((alert, index) => (
+              <TableRow key={`${alert.alert_id}-${index}`}>
                 <TableCell>
                   {alert.alert_id.slice(0, 8)}...
                 </TableCell>
@@ -243,10 +264,10 @@ const StatusBadge = styled.span<{ $status: string }>`
   border-radius: ${({ theme }) => theme.borderRadius.full};
   background-color: ${({ $status, theme }) =>
     $status === 'open' ? `${theme.colors.status.error}20` : `${theme.colors.status.success}20`
-};
+  };
   color: ${({ $status, theme }) =>
     $status === 'open' ? theme.colors.status.error : theme.colors.status.success
-};
+  };
 `;
 
 const PaginationContainer = styled.div`
@@ -318,4 +339,33 @@ const Ellipsis = styled.span`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.sm};
   font-size: ${({ theme }) => theme.typography.fontSizes.sm};
   color: ${({ theme }) => theme.colors.text.muted};
+`;
+
+const LoadingContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: ${({ theme }) => theme.spacing.xl};
+  color: ${({ theme }) => theme.colors.text.muted};
+`;
+
+const LoadingSpinner = styled.div`
+  border: 4px solid ${({ theme }) => theme.colors.background.secondary};
+  border-top: 4px solid ${({ theme }) => theme.colors.button.primary};
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
+const LoadingText = styled.p`
+  font-size: ${({ theme }) => theme.typography.fontSizes.base};
+  font-weight: ${({ theme }) => theme.typography.fontWeights.medium};
 `;
