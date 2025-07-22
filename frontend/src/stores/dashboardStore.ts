@@ -157,7 +157,9 @@ export const useDashboardStore = create<DashboardState>()(
       // Chart data getters
       getTransactionVolumeChartData: () => {
         const state = get();
-        const labels = state.transactionVolume.map(item => {
+        // Reverse the array to show chronological order (oldest to newest)
+        const sortedData = [...state.transactionVolume].reverse();
+        const labels = sortedData.map(item => {
           const date = new Date(item.hour_bucket);
           return date.toLocaleString('en-US', { 
             month: 'short', 
@@ -167,7 +169,7 @@ export const useDashboardStore = create<DashboardState>()(
           });
         });
         
-        const data = state.transactionVolume.map(item => item.transaction_count);
+        const data = sortedData.map(item => item.transaction_count);
         
         return {
           labels,
@@ -223,7 +225,9 @@ export const useDashboardStore = create<DashboardState>()(
 
       getAlertTrendsChartData: () => {
         const state = get();
-        const labels = state.alertTrends.map(item => {
+        // Reverse the array to show chronological order (oldest to newest)
+        const sortedData = [...state.alertTrends].reverse();
+        const labels = sortedData.map(item => {
           const date = new Date(item.hour_bucket);
           return date.toLocaleString('en-US', { 
             month: 'short', 
@@ -233,7 +237,7 @@ export const useDashboardStore = create<DashboardState>()(
           });
         });
         
-        const data = state.alertTrends.map(item => item.alert_count);
+        const data = sortedData.map(item => item.alert_count);
         
         return {
           labels,
